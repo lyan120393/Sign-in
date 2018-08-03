@@ -1,0 +1,55 @@
+html
+  include include/header.pug
+  link(rel="stylesheet" type="text/css" href="/css/reg.css")
+  body
+  nav.navbar.navbar-expand-sm.bg-dark.navbar-dark.fixed-top
+    .container.px-2
+      a.navbar-brand(href="localhost:3000/home") PoPo
+      //- button.navbar-toggler(data-toggle="collapse" data-target="#navbarCollapse")
+      //-   i.far.fa-bars
+      //- .collapse.navbar-collapse#navbarCollapse
+      ul.navbar-nav.ml-auto
+        li.nav-item
+          a.nav-link.active(href="#") Log In
+header#home-hs
+  .dark-overlay
+    .home-inner.container
+      .row
+        .col-lg-8.d-none.d-lg-block
+          h1.display-4 Tracking your hours
+          .d-flex
+            .p-4.align-self-start
+              i.fa.fa-check.fa-2x
+            .p-4.align-self-end
+              p all working hours will be recorded and easy to check later
+          .d-flex
+            .p-4.align-self-start
+              i.fa.fa-check.fa-2x
+            .p-4.align-self-end
+              p Do not need to calculate how long you work, just sign in and sign out.
+          .d-flex
+            .p-4.align-self-start
+              i.fa.fa-check.fa-2x
+            .p-4.align-self-end
+              p Saving a lot of time for manager to calculate and check working status of members.
+        .col-lg-4
+          .card.bg-primary.text-center.card-form
+            .card-body
+              h3 Member Sign Up 
+              p Only current members will be accept
+              form
+                .form-group
+                  input(type="text" class="form-control form-control-lg" placeholder="Abbr Name")
+                .form-group
+                  input(type="text" class="form-control form-control-lg" placeholder="Email")
+                .form-group
+                  input(type="password" class="form-control form-control-lg" placeholder="Password")
+                .form-group
+                  input(type="password" class="form-control form-control-lg" placeholder="Confirm Password")
+                div
+                  input(type="submit" valye="Submit" class="btn btn-outline-light btn-block")
+footer.bg-dark.py-4.footer
+  .container
+    .row
+      .col.text-center.text-white-50
+        p Created and maintained by Longyituo Yan.

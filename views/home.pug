@@ -1,0 +1,118 @@
+doctype html
+html 
+  include include/header.pug
+  link(rel="stylesheet" type="text/css" href="/css/style.css")
+  body
+  nav.navbar.navbar-expand-sm.bg-dark.navbar-dark.fixed-top
+    .container
+      a.navbar-brand(href="localhost:3000/home") LoopLAB
+      button.navbar-toggler(data-toggle="collapse" data-target="#navbarCollapse")
+        i.far.fa-bars
+      .collapse.navbar-collapse#navbarCollapse
+        ul.navbar-nav.ml-auto
+          li.nav-item
+            a.nav-link(href="#home-hs") Home
+          li.nav-item
+            a.nav-link(href="#explore-hs") Explore
+          li.nav-item
+            a.nav-link(href="#create-hs") Create
+          li.nav-item
+            a.nav-link(href="#share-hs") Share
+  header#home-hs
+    .dark-overlay
+      .home-inner.container
+        .row
+          .col-lg-8.d-none.d-lg-block
+            h1.display-4 Member work tracking system
+            .d-flex
+              .p-4.align-self-start
+                i.fa.fa-check.fa-2x
+              .p-4.align-self-end
+                Lorem ipsum dolor, sit amet consectetur adipisicing elit. Aspernatur placeat recusandae quidem nisi? Blanditiis, eaque dolore. Natus in numquam optio.
+            .d-flex
+              .p-4.align-self-start
+                i.fa.fa-check.fa-2x
+              .p-4.align-self-end
+                Lorem ipsum dolor, sit amet consectetur adipisicing elit. Aspernatur placeat recusandae quidem nisi? Blanditiis, eaque dolore. Natus in numquam optio.
+            .d-flex
+              .p-4.align-self-start
+                i.fa.fa-check.fa-2x
+              .p-4.align-self-end
+                Lorem ipsum dolor, sit amet consectetur adipisicing elit. Aspernatur placeat recusandae quidem nisi? Blanditiis, eaque dolore. Natus in numquam optio.
+          .col-lg-4
+            .card.bg-primary.text-center.card-form
+              .card-body
+                h3 Sign up Today
+                p Please fill out this form to register
+                form
+                  .form-group
+                    input(type="text" class="form-control form-control-lg" placeholder="Username")
+                  .form-group
+                    input(type="text" class="form-control form-control-lg" placeholder="Email")
+                  .form-group
+                    input(type="password" class="form-control form-control-lg" placeholder="Password")
+                  .form-group
+                    input(type="password" class="form-control form-control-lg" placeholder="Confirm Password")
+                  div
+                    input(type="submit" valye="Submit" class="btn btn-outline-light btn-block")
+  section#explore-hs
+  .container
+    .row
+      .col.text-center.py-5
+        h1.display-4
+        p.lead Lorem ipsum dolor sit, amet consectetur adipisicing elit. Ut reiciendis, quo ex aliquam reprehenderit amet sapiente ab facere aperiam! Exercitationem?
+        button.btn.btn-outline-secondary(data-toggle="modal" data-target="#contactModal") Find Out More
+  section#explore-section.bg-light.text-muted.py-5
+    .container
+      .row
+        .col-md-6
+          img.img-fluid.mb-3.rounded-circle(src="/img/explore-section1.jpg")
+        .col-md-6
+          h3 Explore & Learn
+          p Lorem ipsum dolor sit, amet consectetur adipisicing elit. Sit quaerat illo culpa fuga fugit earum voluptatem iste ex saepe itaque? rat illo culpa fuga fugit earum voluptatem iste ex saepe itaque?
+          .d-flex
+            .p-4.align-self-center
+              i.fa.fa-check.fa-2x
+            .p-4.align-self-end
+              Lorem ipsum dolor, sit amet consectetur adipisicing elit. Aspernatur placeat recusandae quidem nisi? Blanditiis, eaque dolore. Natus in numquam optio.
+          .d-flex
+            .p-4.align-self-center
+              i.fa.fa-check.fa-2x
+            .p-4.align-self-end
+              Lorem ipsum dolor, sit amet consectetur adipisicing elit. Aspernatur placeat recusandae quidem nisi? Blanditiis, eaque dolore. Natus in numquam optio.
+  footer.bg-dark.py-4
+    .container
+      .row.text-center
+        .col-lg-4.d-inline
+          p Contact Us
+        .col-lg-4.d-inline
+          p Map
+        .col-lg-4.d-inline
+          p Address
+
+  .modal.fade.text-dark#contactModal
+    .modal-dialog
+      .modal-content
+        .modal-header.text-center
+          h5.modal-title Contact US
+          button.close(data-dismiss="modal")
+            span &times;
+        .modal-body
+          form
+            .form-group
+              label(for="name") Name
+              input.form-control(type="text")
+            .form-group
+              label(for="email") Email
+              input.form-control(type="text")
+            .form-group
+              label(for="message") Message
+              textarea.form-control
+        .modal-footer
+          button.btn.btn-primary.btn-block Submit
+
+
+
+
+
+
