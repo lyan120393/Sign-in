@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const validator = require("validator");
 const jwt = require("jsonwebtoken");
 const _ = require("lodash");
+const { ObjectId } = require("mongodb");
 const salt =
   "sudiaduisaudsnadmnsajdnjk1hjk2hkhi8dsy89chqeiudfhqwhdoiqwud8owuyehjkq";
 const bcrypt = require("bcryptjs");
@@ -52,6 +53,7 @@ const PeopleSchema = new mongoose.Schema({
       },
       hours: [
         {
+          //总秒数
           type: Number
         }
       ],
@@ -107,6 +109,10 @@ PeopleSchema.methods = {
     let user = this;
     //$slice 必须结合 $each 一起使用,否则出错.
     return user.update({ $push: { tokens: { $each: [0], $slice: 0 } } });
+  },
+  saveTheDay(theday) {
+    let user = this;
+    console.log(`I'am going to save for user ${user}`);
   }
 };
 
@@ -147,8 +153,27 @@ PeopleSchema.statics = {
           return reject();
         });
     });
+  },
+
+  //自定制功能:根据 userID 和 dayID 去返回对应的 workdays 当中的数据
+  findTheDay(userID, dayID) {
+    let theday;
+    return new Promise((resolve, reject) => {
+      People.findById(userID).then(user => {
+        theday = user.workdays.filter(
+          workday => String(workday._id) === String(dayID)
+        );
+        // console.log(theday);
+        if (theday && theday.length > 0) {
+          return resolve(theday);
+        } else {
+          return reject(`theday is not found`);
+        }
+      });
+    });
   }
 };
+
 //用户密码 bcrypt 加密
 PeopleSchema.pre("save", function(next) {
   let user = this;

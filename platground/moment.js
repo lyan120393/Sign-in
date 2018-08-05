@@ -48,3 +48,5 @@ console.log(`isSame is ${isSame}`);
 let dateString = `${moment().get("year")}-${moment().get("month") +
   1}-${moment().get("date")}`;
 console.log(dateString);
+
+console.log(moment().format("MM-DD-YYYY"));
