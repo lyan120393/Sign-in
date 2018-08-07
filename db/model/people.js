@@ -51,16 +51,14 @@ const PeopleSchema = new mongoose.Schema({
         //The actuall time for sign in
         type: Number
       },
-      hours: [
-        {
-          //总秒数
-          type: Number
-        }
-      ],
-      drink: {
-        Type: Number
+      hours: {
+        //总秒数
+        type: Number
       },
-      snack: {
+      drink: {
+        type: Number
+      },
+      apptizer: {
         type: Number
       },
       note: {
@@ -112,7 +110,24 @@ PeopleSchema.methods = {
   },
   saveTheDay(theday) {
     let user = this;
-    console.log(`I'am going to save for user ${user}`);
+    //根据 user 和 theday 的 ID 找到那一天在 workdays 数组当中的index,
+
+    let findtheIndex = function(user, theday) {
+      let tempArray = user.workdays.filter(
+        workday => String(workday._id) === String(theday._id)
+      );
+      return user.workdays.indexOf(tempArray[0]);
+    };
+    //通过 spice 方法 移除之前的 index, 并插入新的 theday 在相同位置
+    user.workdays.splice(findtheIndex(user, theday), 1, theday);
+    //通过 update operator 把修改好的 user 实例进行 update.
+    People.update(
+      { _id: user._id },
+      { $set: { workdays: user.workdays } },
+      { new: true }
+    ).then(doc => {
+      console.log(doc);
+    });
   }
 };
 
@@ -165,12 +180,21 @@ PeopleSchema.statics = {
         );
         // console.log(theday);
         if (theday && theday.length > 0) {
-          return resolve(theday);
+          return resolve(theday[0]);
         } else {
           return reject(`theday is not found`);
         }
       });
     });
+  },
+
+  //自定制功能:根据提供的时间去把时间转换为MM-DD-YYYY HH:mm格式的 unix 时间.
+  //1. 如果传入时,仅仅传入 HH:mm 时间, 则自动设定为当天的 HH:mm 时间.
+  //2. 如果传入时带有 MM-DD-YYYY HH:mm 时间则使用传入额的时间
+  //3. 如果传入时仅仅带有 MM-DD-YYYY 没有 HH:mm 则自动返回指定日期的 unix 值.
+  //4. 如果传入时没有任何的数据, 则自定返回当天日期的 unix 值.
+  toUnix({ x = 0, y = 2 } = { x: 3, y: 5 }) {
+    console.log(x + y);
   }
 };
 

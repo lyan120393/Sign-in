@@ -149,7 +149,12 @@ app.get("/user/me", authentic, (req, res) => {
 app.post("/signOut", authentic, (req, res) => {
   //signOut 的类型设置分为一种, 近似和自定义时间 signOut
   //用户需要传递过来包含签出时间等一系列的字段.
-  let signOutObj = _.pick(req.body, ["specificTime", "snack", "drink", "note"]);
+  let signOutObj = _.pick(req.body, [
+    "specificTime",
+    "apptizer",
+    "drink",
+    "note"
+  ]);
   //根据用户传过来的数据进行确定签到时间的 unix 数值 signOutTime
   let signOutTime;
   if (signOutObj.specificTime) {
@@ -184,14 +189,11 @@ app.post("/signOut", authentic, (req, res) => {
     //查找指定用户,指定日期 ID 的那一天的数据, 并进行修改
     People.findTheDay(userID, dayID)
       .then(theday => {
-        theday[0].signOut = signOutTime;
-        theday[0].snack = signOutObj.snack;
-        theday[0].drink = signOutObj.drink;
-        theday[0].note = signOutObj.note;
-        let periodTime = moment(theday[0].signOut).diff(
-          moment(theday[0].signIn)
-        );
-        theday[0].hours = periodTime;
+        theday.signOut = signOutTime;
+        theday.apptizer = signOutObj.apptizer;
+        theday.note = signOutObj.note;
+        theday.hours = moment(theday.signOut).diff(moment(theday.signIn));
+        theday.drink = signOutObj.drink;
         req.user.saveTheDay(theday);
         res.send(theday);
       })
@@ -201,20 +203,20 @@ app.post("/signOut", authentic, (req, res) => {
 
 //签到记录时间
 app.post("/signIn", authentic, (req, res) => {
-  //signIn 的类型设置分为三种: 1.近似时间签到和自定义时间(必须当天);
+  //signIn 的类型设置: 1.近似时间签到和自定义时间(必须当天);
   //所以用户传递过来的时间需要进行判定. 根据所传递过来的数据.
   //{specificTime}}
   let signInObj = _.pick(req.body, ["specificTime"]);
 
   //根据用户传过来的数据进行确定签到时间的 unix 数值 signInTime
   let signInTime;
+
   if (signInObj.specificTime) {
     let theTime = `${moment().get("month") + 1}-${moment().get(
       "date"
     )}-${moment().get("year")} ${signInObj.specificTime}`;
     signInTime = moment(theTime, "MM-DD-YYYY HH:mm").unix();
   }
-
   //把 signInTime 的 unix 数值转化为 MM-DD-YYYY 的格式.
   let today = moment(moment.unix(signInTime)).format("MM-DD-YYYY");
 
