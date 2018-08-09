@@ -50,3 +50,4 @@ let dateString = `${moment().get("year")}-${moment().get("month") +
 console.log(dateString);
 
 console.log(moment().format("MM-DD-YYYY"));
+console.log(`moment.unix(1533832200) is ${moment.unix(1533832200)}`);

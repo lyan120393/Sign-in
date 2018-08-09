@@ -129,6 +129,28 @@ PeopleSchema.methods = {
       //成功之后的对数据库的操作记录
       // console.log(doc);
     });
+  },
+  deleteAndSaveTheDay(theDayIndex) {
+    let user = this;
+    //根据 user 和 theday 的 ID 找到那一天在 workdays 数组当中的index,
+
+    // let findtheIndex = function(user, theday) {
+    //   let tempArray = user.workdays.filter(
+    //     workday => String(workday._id) === String(theday._id)
+    //   );
+    //   return user.workdays.indexOf(tempArray[0]);
+    // };
+    //通过 spice 方法 移除之前的 index, 并插入新的 theday 在相同位置
+    user.workdays.splice(theDayIndex, 1);
+    //通过 update operator 把修改好的 user 实例进行 update.
+    People.update(
+      { _id: user._id },
+      { $set: { workdays: user.workdays } },
+      { new: true }
+    ).then(doc => {
+      //成功之后的对数据库的操作记录
+      console.log(doc);
+    });
   }
 };
 
@@ -181,34 +203,13 @@ PeopleSchema.statics = {
         );
         // console.log(theday);
         if (theday && theday.length > 0) {
+          //返回的theday 是一个 obj
           return resolve(theday[0]);
         } else {
           return reject(`theday is not found`);
         }
       });
     });
-  },
-
-  //自定制功能:根据提供的时间去把时间转换为MM-DD-YYYY HH:mm格式的 unix 时间.
-  //1. 如果传入时,仅仅传入 HH:mm 时间, 则自动设定为当天的 HH:mm 时间.
-  //2. 如果传入时带有 MM-DD-YYYY HH:mm 时间则使用传入额的时间
-  //3. 如果传入时仅仅带有 MM-DD-YYYY 没有 HH:mm 则自动返回指定日期的 unix 值.
-  //4. 如果传入时没有任何的数据, 则自定返回当天日期的 unix 值.
-  toUnix(
-    { MM, DD, YYYY, HH, mm } = {
-      MM: moment().get("month"),
-      DD: moment().get("date"),
-      YYYY: moment().get("year")
-    }
-  ) {
-    console.log(`${MM}-${DD}-${YYYY}`);
-
-    // if (signInObj.specificTime) {
-    //   let theTime = `${moment().get("month") + 1}-${moment().get(
-    //     "date"
-    //   )}-${moment().get("year")} ${signInObj.specificTime}`;
-    //   signInTime = moment(theTime, "MM-DD-YYYY HH:mm").unix();
-    // }
   }
 };
 

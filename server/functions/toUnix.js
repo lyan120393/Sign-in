@@ -33,7 +33,8 @@ function toUnix(
     //2. 如果传入时带有 MM-DD-YYYY HH:mm 时间则使用传入的时间
     theTime = moment()
       .set("year", YYYY)
-      .set("month", MM)
+      //MM如果传入的数值时7,表示7月,但如果 set 方法中的 MM 为7, 实则是八月, 所以进行调整.
+      .set("month", MM - 1)
       .set("date", DD)
       .set("hour", HH)
       .set("minute", mm)
@@ -49,7 +50,7 @@ function toUnix(
     //3. 如果传入时仅仅带有 MM-DD-YYYY 没有 HH:mm 则自动返回指定日期的 unix 值.
     theTime = moment()
       .set("year", YYYY)
-      .set("month", MM)
+      .set("month", MM - 1)
       .set("date", DD)
       .set("hour", 0)
       .set("minute", 0)
@@ -66,7 +67,7 @@ function toUnix(
   }
 }
 
-toUnix({ YYYY: 2012, MM: 12, DD: 13 });
+// toUnix({ YYYY: 2018, MM: 8, DD: 9 });
 
 module.exports = {
   toUnix

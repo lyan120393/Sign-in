@@ -247,6 +247,163 @@ app.post("/signIn", authentic, (req, res) => {
     });
 });
 
+app.post("/reSign", authentic, (req, res) => {
+  //获取用户提供的日期, 根据日期进行查找数据库, 如果没有查找到(说明当日没有签到记录)
+  //就可以进行 重新签到( reSign), 然后进行在数据库末尾进行添加数据,返回结果.
+  let user = req.user;
+  //用户需要传递过来包含签出时间等一系列的字段.
+  let reSignObj = _.pick(req.body, [
+    // all time data need required
+    "signInMM",
+    "signInDD",
+    "signInYYYY",
+    "signInHH",
+    "signInmm",
+    "signOutMM",
+    "signOutDD",
+    "signOutYYYY",
+    "signOutHH",
+    "signOutmm",
+    "apptizer",
+    "drink",
+    "note"
+  ]);
+  if (reSignObj.signInYYYY && reSignObj.signInDD && reSignObj.signInMM) {
+    let resignIn = toUnix({
+      MM: reSignObj.signInMM,
+      DD: reSignObj.signInDD,
+      YYYY: reSignObj.signInYYYY,
+      HH: reSignObj.signInHH,
+      mm: reSignObj.signInmm
+    });
+    let resignOut = toUnix({
+      MM: reSignObj.signOutMM,
+      DD: reSignObj.signOutDD,
+      YYYY: reSignObj.signOutYYYY,
+      HH: reSignObj.signOutHH,
+      mm: reSignObj.signOutmm
+    });
+
+    let workdayPromise = new Promise((resolve, reject) => {
+      let workday = user.workdays.filter(workday => {
+        return (
+          //把 signInTime 的 unix 数值转化为 MM-DD-YYYY 的格式.
+          moment(moment.unix(workday.signIn)).format("MM-DD-YYYY") ===
+          //和今天的日期进行对比.toUnix 不带参数自动是当天日期.
+          moment(moment.unix(resignIn)).format("MM-DD-YYYY")
+        );
+      });
+      if (workday.length === 0) {
+        //在 user 的 workdays 数组中找不到任何指定日期的签入记录,就进行补签
+        return resolve(`resolve: workday length is ${workday.length}`);
+      } else if (workday.length > 0) {
+        return reject(
+          `reject: workday length is ${workday.length}, reject reSign`
+        );
+      }
+    });
+
+    workdayPromise
+      .then(() => {
+        let tempWorkday = {
+          signIn: resignIn,
+          signOut: resignOut,
+          apptizer: reSignObj.apptizer,
+          drink: reSignObj.drink,
+          note: reSignObj.note,
+          hours: moment(resignOut).diff(moment(resignIn))
+        };
+
+        People.update(
+          { _id: user._id },
+          { $push: { workdays: tempWorkday } },
+          { new: true }
+        )
+          .then(() => {
+            res.status(200).send({
+              time: `reSign signInTime is ${moment.unix(
+                resignIn
+              )} , ${resignIn}`,
+              message: "reSign success on the date above"
+            });
+          })
+          .catch(e => {
+            res.status(400).send({
+              message: `Cannot signIn ${e}`
+            });
+          });
+      })
+      .catch(e => {
+        res.status(400).send({
+          message: `The day has been signed`
+        });
+      });
+  }
+});
+
+app.delete("/deleteRecord", authentic, (req, res) => {
+  //获得用户提交的日期, 根据日期查找数据库是否有指定匹配日期的记录.
+  //如果找到元素, 获取元素位于原数组当中的位置, 通过 splice 实例方法进行删除.
+  let user = req.user;
+  let deleteRecordObj = _.pick(req.body, ["dateMM", "dateDD", "dateYYYY"]);
+  if (
+    deleteRecordObj.dateMM &&
+    deleteRecordObj.dateDD &&
+    deleteRecordObj.dateYYYY
+  ) {
+    let deleteUnix = toUnix({
+      MM: deleteRecordObj.dateMM,
+      DD: deleteRecordObj.dateDD,
+      YYYY: deleteRecordObj.dateYYYY
+    });
+
+    let workdayPromise = new Promise((resolve, reject) => {
+      let workday = user.workdays.filter(workday => {
+        console.log(moment(moment.unix(workday.signIn)).format("MM-DD-YYYY"));
+        console.log(moment(moment.unix(deleteUnix)).format("MM-DD-YYYY"));
+        return (
+          //把 deleteRecordObj 的 unix 数值转化为 MM-DD-YYYY 的格式.
+          moment(moment.unix(workday.signIn)).format("MM-DD-YYYY") ===
+          moment(moment.unix(deleteUnix)).format("MM-DD-YYYY")
+        );
+      });
+
+      //获取当前已 signIn 日期位于 workdays 数组当中的位置
+      let index = user.workdays.indexOf(workday[0]);
+      // 如果没有搜索到包含的序号
+      if (index < 0) {
+        return reject(
+          `index less than 0, Mean didn't find the day you try to delete record`
+        );
+      } else if (index >= 0) {
+        return resolve(index);
+      }
+    });
+    workdayPromise
+      .then(index => {
+        user.deleteAndSaveTheDay(index);
+        res.status(200).send(`The day has been delete`);
+      })
+      .catch(e => {
+        res.status(400).send(`${e}`);
+      });
+  }
+});
+/*
+增删改查
+  1. 增
+    当日增加:签到签出(标准常规签到)
+    补签:过去日期的补签 (提供签到时间, 签出时间, 小吃, 饮料, note )直接操作数据库签到.补签需要带有一个记录.
+  2. 删除
+    删除指定日期的工作记录(提供签到日期),根据签到日找到当天的记录进行删除
+  3. 改
+    修改指定日期(提供日期), 根据日期进行修改
+  4. 查询
+    查询某日的工作记录
+    查询某段时间的工作记录
+
+*/
+
 //查找指定内容根据 id
 app.get("/user/:id", (req, res) => {
   let id = req.params.id;
