@@ -2,7 +2,8 @@ const moment = require("moment");
 
 function toUnix(
   { MM, DD, YYYY, HH, mm } = {
-    MM: moment().get("month"),
+    //默认的值的月份会比真实的月份少一个月
+    MM: moment().get("month") + 1,
     DD: moment().get("date"),
     YYYY: moment().get("year")
   }
