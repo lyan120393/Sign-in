@@ -636,18 +636,6 @@ app.post("/period", authentic, (req, res) => {
     .catch(e => {
       res.status(400).send(e);
     });
-
-  // console.log(moment(moment.unix(dateStart)).format("MM-DD-YYYY"));
-  // console.log(moment(moment.unix(dateEnd)).format("MM-DD-YYYY"));
-  // let result = moment(
-  //   moment(moment.unix(tempDay)).format("YYYY-MM-DD")
-  // ).isBetween(
-  //   moment(moment.unix(dateStart)).format("YYYY-MM-DD"),
-  //   moment(moment.unix(dateEnd)).format("YYYY-MM-DD"),
-  //   null,
-  //   "[]"
-  // );
-  // console.log(result);
 });
 
 /*
