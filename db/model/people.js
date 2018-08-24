@@ -18,6 +18,14 @@ const PeopleSchema = new mongoose.Schema({
       message: `{VALUE} is not a valid E-mail`
     }
   },
+  username: {
+    type: String,
+    required: true,
+    unique: true,
+    minlength: 1,
+    maxlength: 64,
+    trim: true
+  },
   password: {
     type: String,
     required: true,
@@ -192,7 +200,6 @@ PeopleSchema.statics = {
         });
     });
   },
-
   //自定制功能:根据 userID 和 dayID 去返回对应的 workdays 当中的数据
   findTheDay(userID, dayID) {
     let theday;
@@ -214,6 +221,7 @@ PeopleSchema.statics = {
 };
 
 //用户密码 bcrypt 加密
+//在保存之前, 对密码进行加密,将 plain text 密码替换为加密过的进行存入数据库.
 PeopleSchema.pre("save", function(next) {
   let user = this;
   if (user.isModified("password")) {

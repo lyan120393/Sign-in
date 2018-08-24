@@ -16,7 +16,7 @@ app.use(bodyParser.json());
 //使用 app.use 指定静态文件所在的位置在 public 文件夹之后,这样只要/就表示位于 public 文件夹之内.
 app.use(express.static(__dirname + "/public/"));
 
-//渲染页面
+//渲染页面例子
 app.get("/", (req, res) => {
   res.render("reg.pug");
 });
@@ -29,12 +29,13 @@ app.get("/", (req, res) => {
 app.post("/reg", (req, res) => {
   let newUser = new People({
     email: req.body.email,
+    username: req.body.username,
     password: req.body.password
   });
   //防止E-mail 重复
   People.findOne({ email: newUser.email }).then(existUser => {
     if (existUser) {
-      res.status(404).send({
+      res.status(400).send({
         message: "User name duplicated, please make change!"
       });
     } else {
@@ -82,6 +83,7 @@ app.post("/user/login", (req, res) => {
     });
 });
 //修改密码
+//提供之前的密码和新密码
 app.patch("/user/change_password", authentic, (req, res) => {
   let tempUser = _.pick(req.body, ["password", "newPassword"]);
   tempUser.email = req.user.email;
@@ -141,15 +143,14 @@ app.delete("/user/logoutAll", authentic, (req, res) => {
     });
 });
 
-//验证 token 进入用户的私人路由.
+//进入用户的个人页面.
 app.get("/user/me", authentic, (req, res) => {
   res.status(200).send(req.user.toJson());
 });
 
-//签出记录(签出时间, 小吃, 饮料, note)
+//当天签出记录(签出时间, 小吃, 饮料, note)
+//接受 HH mm apptizer drink note 参数, 只能适用于当天签出.
 app.post("/signOut", authentic, (req, res) => {
-  //signOut 的类型设置分为一种, 近似和自定义时间 signOut
-  //用户需要传递过来包含签出时间等一系列的字段.
   let signOutObj = _.pick(req.body, ["HH", "mm", "apptizer", "drink", "note"]);
   //根据用户传过来的数据进行确定签到时间的 unix 数值 signOutTime
   let signOutTime;
@@ -159,7 +160,7 @@ app.post("/signOut", authentic, (req, res) => {
   //在数据库当中查找对应当天日期的那一条记录所在的位置. promise resolve 之后返回 userID 和dayID
   let workdayPromise = new Promise((resolve, reject) => {
     let workday = req.user.workdays.filter(workday => {
-      console.log(moment(moment.unix(toUnix())).format("MM-DD-YYYY"));
+      // console.log(moment(moment.unix(toUnix())).format("MM-DD-YYYY"));
       //查看是否有符合当天签到日期的签入记录,当有当日签入信息之后,在进行操作签出. 数组是签入信息的数组,根据长度判断
       return (
         moment(moment.unix(toUnix())).format("MM-DD-YYYY") ===
@@ -638,39 +639,20 @@ app.post("/period", authentic, (req, res) => {
     });
 });
 
-/*
-增删改查
-  1. 增
-    当日增加:签到签出(标准常规签到)
-    补签:过去日期的补签 (提供签到时间, 签出时间, 小吃, 饮料, note )直接操作数据库签到.补签需要带有一个记录.
-  2. 删除
-    删除指定日期的工作记录(提供签到日期),根据签到日找到当天的记录进行删除
-  3. 改 /edit
-    修改指定日期(提供日期), 查询当日是否有签到记录. 
-      如果有记录,根据日期进行修改.
-      如果没有告诉没有记录无法修改.
-  4. 查询 
-    查询某日的工作记录(使用/ editcheck 路由)
-    查询某段时间的工作记录(工作这里)
-      输入肯定是两个时间点, 计算包含这两个时间点以及在他们之间的时间点的元素.
-
-
-*/
-
-//查找指定内容根据 id
-app.get("/user/:id", (req, res) => {
-  let id = req.params.id;
-  if (!ObjectId.isValid(id)) {
-    res.status(404).send("inValid ID");
-  }
-  People.findById(id)
-    .then(user => {
-      res.status(200).send(user);
-    })
-    .catch(err => {
-      res.status(400).send(err);
-    });
-});
+// //查找指定内容根据 id
+// app.get("/user/:id", (req, res) => {
+//   let id = req.params.id;
+//   if (!ObjectId.isValid(id)) {
+//     res.status(404).send("inValid ID");
+//   }
+//   People.findById(id)
+//     .then(user => {
+//       res.status(200).send(user);
+//     })
+//     .catch(err => {
+//       res.status(400).send(err);
+//     });
+// });
 
 app.listen(3000, () => {
   console.log(`Server is running`);
