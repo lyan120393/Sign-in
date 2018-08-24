@@ -29,7 +29,8 @@ app.get("/login", (req, res) => {
   res.render("login.pug");
 });
 
-//用户注册  用户注册成功之后真的有必要给 token 吗?
+//用户注册
+//用户注册成功之后真的有必要给 token 吗? 不给于 Token.
 app.post("/reg", (req, res) => {
   let newUser = new People({
     email: req.body.email,
@@ -66,7 +67,6 @@ app.post("/reg", (req, res) => {
 //用户登录与生成 Token
 app.post("/user/login", (req, res) => {
   let tempUser = _.pick(req.body, ["email", "password"]);
-  console.log(tempUser);
   People.findByCredentials(tempUser)
     .then(user => {
       user

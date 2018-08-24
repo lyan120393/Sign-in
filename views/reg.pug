@@ -1,55 +1,34 @@
+//- doctype html
 html
   include include/header.pug
-  link(rel="stylesheet" type="text/css" href="/css/reg.css")
+  link(rel="stylesheet" type="text/css" href="/css/login.css")
   body
-  nav.navbar.navbar-expand-sm.bg-dark.navbar-dark.fixed-top
-    .container.px-2
-      a.navbar-brand(href="localhost:3000/home") PoPo
-      //- button.navbar-toggler(data-toggle="collapse" data-target="#navbarCollapse")
-      //-   i.far.fa-bars
-      //- .collapse.navbar-collapse#navbarCollapse
-      ul.navbar-nav.ml-auto
-        li.nav-item
-          a.nav-link.active(href="#") Log In
-header#home-hs
-  .dark-overlay
-    .home-inner.container
-      .row
-        .col-lg-8.d-none.d-lg-block
-          h1.display-4 Tracking your hours
-          .d-flex
-            .p-4.align-self-start
-              i.fa.fa-check.fa-2x
-            .p-4.align-self-end
-              p all working hours will be recorded and easy to check later
-          .d-flex
-            .p-4.align-self-start
-              i.fa.fa-check.fa-2x
-            .p-4.align-self-end
-              p Do not need to calculate how long you work, just sign in and sign out.
-          .d-flex
-            .p-4.align-self-start
-              i.fa.fa-check.fa-2x
-            .p-4.align-self-end
-              p Saving a lot of time for manager to calculate and check working status of members.
-        .col-lg-4
-          .card.bg-primary.text-center.card-form
-            .card-body
-              h3 Member Sign Up 
-              p Only current members will be accept
-              form
-                .form-group
-                  input(type="text" class="form-control form-control-lg" placeholder="Abbr Name")
-                .form-group
-                  input(type="text" class="form-control form-control-lg" placeholder="Email")
-                .form-group
-                  input(type="password" class="form-control form-control-lg" placeholder="Password")
-                .form-group
-                  input(type="password" class="form-control form-control-lg" placeholder="Confirm Password")
-                div
-                  input(type="submit" valye="Submit" class="btn btn-outline-light btn-block")
-footer.bg-dark.py-4.footer
-  .container
-    .row
-      .col.text-center.text-white-50
-        p Created and maintained by Longyituo Yan.
+  nav.navbar.navbar-expand-lg.light.bg-light.fixed-top
+    a.navbar-brand(href="localhost:3000/login") POPO
+  section#register-form-section
+    form.container.py-5#register-form
+      .form-group
+        p.h4.text-center Member Register
+      .form-group
+        label(for="exampleInputEmail") Email
+        input(type="emial" class="form-control" id="exampleInputEmail" aria-describedby="emailHelp" placeholder="Enter email")
+        small#emailHelp.form-text.text-muted We'll never share your email with anyone else.
+      .form-group
+        label(for="exampleInputUserName") User Name
+        input(type="emial" class="form-control" id="exampleInputUserName" aria-describedby="emailHelp" placeholder="User Name")
+        small#emailHelp.form-text.text-muted Please input the name as same as your schedual.
+      .form-group
+        label(for="exampleInputPassword") Password
+        input.form-control#exampleInputPassword(type="password" placeholder="Password")
+      .form-group
+        label(for="ConfirmPassword") Confirm Password
+        input.form-control#ConfirmPassword(type="password" placeholder="Confirm Password")
+      .container.row
+        .col-6.text-center
+          button.btn.btn-success(type="submit") Confirm
+        .col-6.text-center
+          button.btn.btn-outline-danger#register-btn(type="submit") Abandon
+  footer#footer
+    p.text-center Copyright POPO.LLC 2014-2018
+    //- script(src="/js/function.js")
+    script(src="/js/reg.js")

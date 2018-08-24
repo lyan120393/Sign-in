@@ -10,6 +10,11 @@ document.querySelector("#login-form").addEventListener("change", function(e) {
     login.password = e.target.value;
   }
 });
+
+document.querySelector("#register-btn").addEventListener("click", function(e) {
+  location.assign("/reg.pug");
+});
+
 //使用 XMLHttpRequest 请求的案例:
 //点击登录按钮之后的操作
 document.querySelector("#login-form").addEventListener("submit", function(e) {
