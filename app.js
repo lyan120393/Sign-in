@@ -17,13 +17,17 @@ app.use(bodyParser.json());
 app.use(express.static(__dirname + "/public/"));
 
 //渲染页面例子
-app.get("/", (req, res) => {
+app.get("/reg", (req, res) => {
   res.render("reg.pug");
 });
+//渲染页面的路由, 渲染页面的名称(带有. pug 结尾), 然后一个对象包含需要 passIn 的键值对.
+app.get("/home", (req, res) => {
+  res.render("home.pug", { title: "Home Page of SingIn Project" });
+});
 
-// app.get("/reg", (req, res) => {
-//   res.render("home.pug", { title: "Home Page of SingIn Project" });
-// });
+app.get("/login", (req, res) => {
+  res.render("login.pug");
+});
 
 //用户注册  用户注册成功之后真的有必要给 token 吗?
 app.post("/reg", (req, res) => {
