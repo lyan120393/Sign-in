@@ -66,6 +66,7 @@ app.post("/reg", (req, res) => {
 //用户登录与生成 Token
 app.post("/user/login", (req, res) => {
   let tempUser = _.pick(req.body, ["email", "password"]);
+  console.log(tempUser);
   People.findByCredentials(tempUser)
     .then(user => {
       user
@@ -81,7 +82,7 @@ app.post("/user/login", (req, res) => {
         });
     })
     .catch(err => {
-      res.status(404).send({
+      res.status(400).send({
         message: "Password or Username is incorrect"
       });
     });
