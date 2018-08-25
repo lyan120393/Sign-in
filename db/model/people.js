@@ -21,7 +21,7 @@ const PeopleSchema = new mongoose.Schema({
   username: {
     type: String,
     required: true,
-    unique: true,
+    // unique: true,
     minlength: 1,
     maxlength: 64,
     trim: true
@@ -94,18 +94,23 @@ const PeopleSchema = new mongoose.Schema({
 PeopleSchema.methods = {
   generateToken: function() {
     let user = this;
-    let access = "auth";
-    let token = jwt.sign({ _id: user._id.toHexString(), access }, salt);
+    if (user.permition === true) {
+      let access = "auth";
+      let token = jwt.sign({ _id: user._id.toHexString(), access }, salt);
 
-    user.tokens.push({ access, token });
-    // return Promise.resolve().then(()=>token);
-    return user.save().then(() => token);
+      user.tokens.push({ access, token });
+      // return Promise.resolve().then(()=>token);
+      return user.save().then(() => token);
+    } else {
+      let token;
+      return user.save().then(() => token);
+    }
   },
   //过滤 user 实例中需要的信息内容给用户, 当然也可以添加 role.kitchen 这种字段.
   toJson: function() {
     let user = this;
     let userObj = user.toObject();
-    return _.pick(userObj, ["_id", "email"]);
+    return _.pick(userObj, ["_id", "email", "permition"]);
   },
   removeToken(token) {
     let user = this;
