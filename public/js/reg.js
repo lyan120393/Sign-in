@@ -43,9 +43,9 @@ document
       request.addEventListener("readystatechange", function(e) {
         if (e.target.readyState === 4) {
           // const data = e.target.responseText;
-          console.log(e.target.responseText);
+          // console.log(e.target.responseText);
           const data = JSON.parse(e.target.responseText);
-          console.log(data);
+          // console.log(data);
           try {
             if (data.user.email) {
               console.log(`Register Successful, please wait`);

@@ -48,7 +48,7 @@ app.post("/reg", (req, res) => {
   //防止E-mail 重复
   People.findOne({ email: newUser.email }).then(existUser => {
     if (existUser && existUser != null) {
-      console.log(`existUser is ${existUser}`);
+      // console.log(`existUser is ${existUser}`);
       res.status(400).send({
         message: "User name duplicated, please make change!"
       });
@@ -77,6 +77,7 @@ app.post("/user/login", (req, res) => {
         //如果 user 的 permition 为 false, 则生成空 token.
         .generateToken()
         .then(token => {
+          // console.log(`token is ${token}`);
           res
             .status(200)
             .header("x-auth", token)
