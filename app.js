@@ -1,5 +1,6 @@
 const express = require("express");
 const { People } = require("./db/model/people.js");
+const { Store } = require("./db/model/store.js");
 const db = require("./db/dbConfig.js").db;
 const bodyParser = require("body-parser");
 const { ObjectId } = require("mongodb");
@@ -43,7 +44,9 @@ app.post("/reg", (req, res) => {
   let newUser = new People({
     email: req.body.email,
     username: req.body.username,
-    password: req.body.password
+    password: req.body.password,
+    //员工所在店铺的 ID 号码.
+    belongStore: req.body.belongStore
   });
   //防止E-mail 重复
   People.findOne({ email: newUser.email }).then(existUser => {
@@ -244,7 +247,7 @@ app.post("/signIn", authentic, (req, res) => {
         .then(() => {
           res.status(200).send({
             time: `signInTime is ${moment.unix(signInTime)} , ${signInTime}`,
-            message: "signIn success, start to work now"
+            message: `${req.user.username} signIn success, start to work now`
           });
         })
         .catch(e => {
@@ -296,7 +299,7 @@ app.post("/reSign", authentic, (req, res) => {
       HH: reSignObj.signOutHH,
       mm: reSignObj.signOutmm
     });
-
+    //查看当天是否已有签到记录, 如果有则无法继续 resign
     let workdayPromise = new Promise((resolve, reject) => {
       let workday = user.workdays.filter(workday => {
         return (
@@ -311,7 +314,9 @@ app.post("/reSign", authentic, (req, res) => {
         return resolve(`resolve: workday length is ${workday.length}`);
       } else if (workday.length > 0) {
         return reject(
-          `reject: workday length is ${workday.length}, reject reSign`
+          `reject: workday length is ${
+            workday.length
+          }, mean you already have workday record on the day,  reject reSign`
         );
       }
     });
@@ -319,6 +324,8 @@ app.post("/reSign", authentic, (req, res) => {
     workdayPromise
       .then(() => {
         let tempWorkday = {
+          //用户手动补签, 所以要把 manualEdit 设置为 true
+          manualEdit: true,
           signIn: resignIn,
           signOut: resignOut,
           apptizer: reSignObj.apptizer,
@@ -418,8 +425,8 @@ app.post("/editcheck", authentic, (req, res) => {
     });
     let workdayPromise = new Promise((resolve, reject) => {
       let workday = user.workdays.filter(workday => {
-        console.log(moment(moment.unix(workday.signIn)).format("MM-DD-YYYY"));
-        console.log(moment(moment.unix(editUnix)).format("MM-DD-YYYY"));
+        // console.log(moment(moment.unix(workday.signIn)).format("MM-DD-YYYY"));
+        // console.log(moment(moment.unix(editUnix)).format("MM-DD-YYYY"));
         return (
           //把 deleteRecordObj 的 unix 数值转化为 MM-DD-YYYY 的格式.
           moment(moment.unix(workday.signIn)).format("MM-DD-YYYY") ===
@@ -497,8 +504,9 @@ app.post("/edit", authentic, (req, res) => {
   //根据用户提供的新的签入时间和签出时间重新计算
   if (newSignIn || newSignOut) {
     if (newSignIn && newSignOut) {
-      console.log(`both exist`);
+      // console.log(`both exist`);
       tempWorkday = {
+        //把手动设置过的操作, 设置 manualEdit 为 true
         manualEdit: true,
         signIn: newSignIn,
         signOut: newSignOut,
@@ -508,8 +516,9 @@ app.post("/edit", authentic, (req, res) => {
         hours: moment(newSignOut).diff(moment(newSignIn))
       };
     } else if (!newSignIn) {
-      console.log(`newSignIn not exist`);
+      // console.log(`newSignIn not exist`);
       tempWorkday = {
+        //把手动设置过的操作, 设置 manualEdit 为 true
         manualEdit: true,
         signIn: editRecordObj.signIn,
         signOut: newSignOut,
@@ -519,8 +528,9 @@ app.post("/edit", authentic, (req, res) => {
         hours: moment(newSignOut).diff(moment(editRecordObj.signIn))
       };
     } else if (!newSignOut) {
-      console.log(`newSignOut not exist`);
+      // console.log(`newSignOut not exist`);
       tempWorkday = {
+        //把手动设置过的操作, 设置 manualEdit 为 true
         manualEdit: true,
         signIn: newSignIn,
         signOut: editRecordObj.signOut,
@@ -531,8 +541,9 @@ app.post("/edit", authentic, (req, res) => {
       };
     }
   } else if (!newSignIn && !newSignOut) {
-    console.log("Both not exist");
+    // console.log("Both not exist");
     tempWorkday = {
+      //把手动设置过的操作, 设置 manualEdit 为 true
       manualEdit: true,
       signIn: editRecordObj.signIn,
       signOut: editRecordObj.signOut,
@@ -615,9 +626,9 @@ app.post("/period", authentic, (req, res) => {
   });
   let workdayPromise = new Promise((resolve, reject) => {
     let workday = user.workdays.filter(workday => {
-      console.log(moment(moment.unix(dateStart)).format("MM-DD-YYYY"));
-      console.log(moment(moment.unix(dateEnd)).format("MM-DD-YYYY"));
-      console.log(moment(moment.unix(workday.signIn)).format("MM-DD-YYYY"));
+      // console.log(moment(moment.unix(dateStart)).format("MM-DD-YYYY"));
+      // console.log(moment(moment.unix(dateEnd)).format("MM-DD-YYYY"));
+      // console.log(moment(moment.unix(workday.signIn)).format("MM-DD-YYYY"));
       return (
         //把 deleteRecordObj 的 unix 数值转化为 MM-DD-YYYY 的格式.
         moment(
@@ -648,6 +659,112 @@ app.post("/period", authentic, (req, res) => {
     .catch(e => {
       res.status(400).send(e);
     });
+});
+
+//编辑留言板中的内容, 验证员工所对应的权限
+app.post("/user/editMessageBoard", authentic, (req, res) => {
+  //得到所有的信息内容和编辑的信息部分
+  let user = req.user;
+  let editObj = _.pick(req.body, ["message", "messageField"]);
+  editObj.timeStamp = toUnix();
+  editObj.username = user.username;
+  //验证员工权限, 是否可以修改所对应的信息部分
+  //如果可以修改则进行修改, 并记录信息内容, 时间, 用户名称
+  Store.editMessageBoard(
+    user.belongStore,
+    user.role,
+    editObj.messageField,
+    editObj.message,
+    editObj.timeStamp,
+    editObj.username
+  )
+    .then(result => {
+      res.status(200).send({ message: result });
+    })
+    .catch(e => {
+      res.status(400).send({ message: e });
+    });
+});
+
+//获取店铺留言板信息
+app.get("/user/messageBoard", authentic, (req, res) => {
+  let user = req.user;
+  //通过私人路由知道用户所属商店, 然后获得商店 ID, 然后把对应商店实例当中的 messageBoard 的信息调出来.
+  let storeID = user.belongStore;
+  Store.findById(storeID)
+    .then(store => {
+      res.status(200).send(store.messageBoard);
+    })
+    .catch(e => {
+      res.status(404).send({
+        message: `cannot find store ${e}`
+      });
+    });
+});
+
+//创建新商店
+app.post("/createStore", (req, res) => {
+  let createObj = _.pick(req.body, [
+    "name",
+    "openTimeHH",
+    "openTimemm",
+    "closeTimeHH",
+    "closeTimemm"
+  ]);
+  // console.log(`createObj is ${createObj}`);
+
+  let store = new Store({
+    name: createObj.name,
+    openTime: toUnix({ HH: createObj.openTimeHH, mm: createObj.openTimemm }),
+    closeTime: toUnix({ HH: createObj.closeTimeHH, mm: createObj.closeTimemm })
+  });
+  // console.log(`store is ${store}`);
+
+  //防止E-mail 重复
+  Store.findOne({ name: store.name }).then(existStore => {
+    if (existStore && existStore != null) {
+      // console.log(`existStore is ${existStore}`);
+      res.status(400).send({
+        message: "Store name duplicated, please make change!"
+      });
+    } else {
+      store
+        .save()
+        .then(store => {
+          res.status(200).send({
+            storename: store.name,
+            openTime: moment(moment.unix(store.openTime)).format("HH:mm"),
+            closeTime: moment(moment.unix(store.closeTime)).format("HH:mm")
+          });
+        })
+        .catch(err => {
+          if (err) {
+            res.status(400).send(`${err}`);
+          }
+        });
+    }
+  });
+});
+
+app.post("/addSchedual", authentic, (req, res) => {
+  let user = req.user;
+  //判断用户权限, 如果是 manager 才能够提交整体班表.
+  let newScehdualObj = _.pick(req.body, [
+    "mondayDateYYYY",
+    "mondayDateMM",
+    "mondayDateDD",
+    "username",
+    "weekSchedual"
+  ]);
+  //找到 user 对应的商店实例 Store.findbyId()
+  //根据 store 实例查找 mondayDate 所对应的周是否位于 weeklySchedual 数组当中, 如果有则添加, 如果没有则新创建.
+  //然后在找到 store实例当中进行添加内容对应 username 的具体工作的 schedual 即可.
+  console.log(newScehdualObj);
+  // let newScehdual = {};
+  // if (user.role.manager) {
+  // } else {
+  //   //权限不够, 无法给店铺添加新的路由.
+  // }
 });
 
 // //查找指定内容根据 id

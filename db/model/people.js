@@ -33,6 +33,10 @@ const PeopleSchema = new mongoose.Schema({
     maxlength: 64,
     trim: true
   },
+  belongStore: {
+    type: String
+    // required: true
+  },
   permition: {
     type: Boolean,
     default: false
@@ -80,17 +84,21 @@ const PeopleSchema = new mongoose.Schema({
   ],
   role: {
     manager: {
-      type: Boolean
+      type: Boolean,
+      default: false
     },
     front: {
-      type: Boolean
+      type: Boolean,
+      default: false
     },
     kitchen: {
-      type: Boolean
+      type: Boolean,
+      default: false
     }
   }
 });
 
+//需要实例才能使用的实例方法
 PeopleSchema.methods = {
   generateToken: function() {
     let user = this;
@@ -167,6 +175,7 @@ PeopleSchema.methods = {
   }
 };
 
+//静态方法
 PeopleSchema.statics = {
   //根据 Token 查找用户
   findByToken(token) {
@@ -225,6 +234,7 @@ PeopleSchema.statics = {
   }
 };
 
+//在执行某项数据库操作之前, 会执行的操作
 //用户密码 bcrypt 加密
 //在保存之前, 对密码进行加密,将 plain text 密码替换为加密过的进行存入数据库.
 PeopleSchema.pre("save", function(next) {

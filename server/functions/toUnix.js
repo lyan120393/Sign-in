@@ -3,9 +3,12 @@ const moment = require("moment");
 function toUnix(
   { MM, DD, YYYY, HH, mm } = {
     //默认的值的月份会比真实的月份少一个月
+    //如果传入一个空的对象, 则使用参数默认值
     MM: moment().get("month") + 1,
     DD: moment().get("date"),
-    YYYY: moment().get("year")
+    YYYY: moment().get("year"),
+    HH: moment().get("hour"),
+    mm: moment().get("minute")
   }
 ) {
   let theTime;
