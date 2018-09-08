@@ -5,6 +5,95 @@ html
   nav.navbar.navbar-expand-lg.light.bg-light.fixed-top
     a.navbar-brand(href="localhost:3000/login") POPO
   section#login-form-section
-    container.py-5#login-form
-      p.h4.text-center Personal Page
+    form.container.py-5#login-form
+      .form-group
+        p.h4.text-center Personal Page
+      .form-group.border-bottom.border-top
+        p Message Board
+        .row
+          .col-10
+            lable manager
+            p This is message from manager
+          .col-2.pt-2
+            button.btn.btn-outline-primary.btn-sm.align-middle#manager-btn(type="button") edit
+        .row
+          .col-10
+            lable front
+            p This is message from front
+          .col-2.pt-2
+            button.btn.btn-outline-primary.btn-sm#front-btn(type="button" disabled) edit
+        .row
+          .col-10
+            lable kitchen
+            p This is message from kitchen
+          .col-2.pt-2
+            button.btn.btn-outline-primary.btn-sm#kitchen-btn(type="button") edit
+      .form-group.border-bottom
+        p Clock In
+          .form-group
+            .row.text-center
+              .col-4
+                button.btn.btn-success.btn-lg#signIn-btn(type="button") Sign In                
+              .col-4
+                button.btn.btn-outline-danger.btn-lg#signOut-btn(type="button") Sign Out
+              .col-4
+                button.btn.btn-warning.btn-lg#reSign-btn(type="button") Re-Sign
+            .row.pt-2
+              .col
+                p Yan you sign in is successful, please start your work.
+            .row.text-center
+              .col-6
+                button.btn.btn-outline-Info.btn-sm#editRecord-btn(type="button") Edit Record
+              .col-6
+                button.btn.btn-outline-dark.btn-sm#deleteRecord-btn(type="button") Delete Record
+      .form-group.border-bottom
+          .row
+            .col-8
+              p My Workdays In the week
+            .col-4.text-right
+              button.btn.btn-outline-Info.btn-sm#statistic-btn(type="button") more
+          .div.table-responsive
+            table.table.table-striped.table-bordered.text-center
+              thread
+                tr
+                  th(scope="col") week
+                  th(scope="col") In
+                  th(scope="col") Out
+                  th(scope="col") hours
+                  th(scope="col") minutes
+                  th(scope="col") drink
+                  th(scope="col") apptizer
+                  th(scope="col") notes
+              tbody
+                tr
+                  th(scope="row") Monday
+                  td 10:30
+                  td 17:00
+                  td 6
+                  td 30
+                  td 1
+                  td 2
+                  td go to storage
+                tr
+                  th(scope="row") Tuesday
+                  td 
+                  td 
+                  td 
+                  td 
+                  td 
+                  td 
+                  td 
+                tr
+                  th(scope="row") Wednesday
+                  td 11:30
+                  td 17:30
+                  td 7
+                  td 0
+                  td 1
+                  td 2
+                  td
+  include include/footer.pug
+
+
+
   script(src="/js/me.js")

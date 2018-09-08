@@ -3,12 +3,7 @@ head(lang='en')
     meta(name="viewport" 
         content="width=device-width, initial-scale=1, shrink-to-fit=no"
         )
-    //- meta(http-equiv="Content-Security-Policy" content="default-src 'self'; font-src 'self' data: http://localhost:3000/")
-    //- meta(http-equiv="Content-Security-Policy" content="default-src https://cdn.example.net; child-src 'none'; object-src 'none'")
-
-    //- meta(http-equiv="X-UA-Compatible" 
-    //-     content="ie=edge"
-    //-     )
+    //- meta(http-equiv="Content-Security-Policy" content="default-src *; script-src 'self' stackpath.bootstrapcdn.com code.jquery.com cdnjs.cloudflare.com; object-src 'self'; style-src 'self' use.fontawesome.com stackpath.bootstrapcdn.com;font-src *; child-src https:")
     link(rel="stylesheet" 
         href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ" crossorigin="anonymous"
         )

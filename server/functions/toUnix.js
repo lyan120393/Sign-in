@@ -3,7 +3,7 @@ const moment = require("moment");
 function toUnix(
   { MM, DD, YYYY, HH, mm } = {
     //默认的值的月份会比真实的月份少一个月
-    //如果传入一个空的对象, 则使用参数默认值
+    //如果传入为空 toUnix(), 则使用参数默认值, 参数默认值就是现在此时此刻.
     MM: moment().get("month") + 1,
     DD: moment().get("date"),
     YYYY: moment().get("year"),

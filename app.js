@@ -159,7 +159,78 @@ app.delete("/user/logoutAll", authentic, (req, res) => {
 
 //进入用户的个人页面.
 app.get("/user/me", authentic, (req, res) => {
-  res.status(200).send(req.user.toJson());
+  //获取用户的个人页面加载时所需要的字段
+  let user = req.user;
+  let resObj = {};
+  resObj.user = req.user.toJson();
+  //获取当天是否已经有过签到的信息, 如果有需要把签到成功的信息传递出去, 如果没有则无所谓了.
+  People.findById(user._id)
+    .then(user => {
+      let todayUnix = toUnix();
+      let workdayPromise = new Promise((resolve, reject) => {
+        let workday = user.workdays.filter(workday => {
+          // console.log(moment(moment.unix(workday.signIn)).format("MM-DD-YYYY"));
+          // console.log(moment(moment.unix(todayUnix)).format("MM-DD-YYYY"));
+          return (
+            //把 deleteRecordObj 的 unix 数值转化为 MM-DD-YYYY 的格式.
+            moment(moment.unix(workday.signIn)).format("MM-DD-YYYY") ===
+            moment(moment.unix(todayUnix)).format("MM-DD-YYYY")
+          );
+        });
+        let index;
+        if (workday.length != 0) {
+          //获取当前已 signIn 日期位于 workdays 数组当中的位置
+          index = user.workdays.indexOf(workday[0]);
+        } else {
+          index = -1;
+        }
+        // 如果没有搜索到包含的序号
+        if (index < 0) {
+          return reject(`index less than 0, Mean didn't find the day`);
+        } else if (index >= 0) {
+          //找到指定日期的签到记录位于 workdays 数组当中的index;
+          return resolve(index);
+        }
+      });
+      workdayPromise
+        .then(index => {
+          //返回这一天的记录
+          resObj.signInInfo = `${user.username} has signed In today at ${
+            user.workdays[index].signIn
+          }`;
+          // 再获取的就是留言板的全部内容
+          Store.findById(user.belongStore)
+            .then(store => {
+              resObj.messageBoard = store.messageBoard;
+              res.status(200).send(resObj);
+            })
+            .catch(e => {
+              console.log(`/user/me cannot find store ${e}`);
+            });
+
+          // res.status(200).send(resObj);
+        })
+        .catch(e => {
+          //如果没有找到用户当天签到的记录的话,执行如下内容:
+          // 再获取的就是留言板的全部内容
+          Store.findById(user.belongStore)
+            .then(store => {
+              resObj.messageBoard = store.messageBoard;
+              //设置当天的签到记录信息为空
+              resObj.signInInfo = ``;
+              res.status(200).send(resObj);
+            })
+            .catch(e => {
+              console.log(`/user/me cannot find store ${e}`);
+            });
+        });
+    })
+    .catch(e => {
+      console.log(`/user/me cannot find user ${e}`);
+    });
+
+  //获取对应员工的指定日期之间的工作记录(一般是一周内的, 带有日期)
+  //把获取到的字段作为数据进行传递给模板页面
 });
 
 //当天签出记录(签出时间, 小吃, 饮料, note)
@@ -442,12 +513,14 @@ app.post("/editcheck", authentic, (req, res) => {
           `index less than 0, Mean didn't find the day you try to edit record`
         );
       } else if (index >= 0) {
+        //找到指定日期的签到记录位于 workdays 数组当中的index;
         return resolve(index);
       }
     });
     workdayPromise
       .then(index => {
         // user.deleteAndSaveTheDay(index);
+        //返回这一天的记录
         res.status(200).send(user.workdays[index]);
       })
       .catch(e => {
@@ -744,27 +817,6 @@ app.post("/createStore", (req, res) => {
         });
     }
   });
-});
-
-app.post("/addSchedual", authentic, (req, res) => {
-  let user = req.user;
-  //判断用户权限, 如果是 manager 才能够提交整体班表.
-  let newScehdualObj = _.pick(req.body, [
-    "mondayDateYYYY",
-    "mondayDateMM",
-    "mondayDateDD",
-    "username",
-    "weekSchedual"
-  ]);
-  //找到 user 对应的商店实例 Store.findbyId()
-  //根据 store 实例查找 mondayDate 所对应的周是否位于 weeklySchedual 数组当中, 如果有则添加, 如果没有则新创建.
-  //然后在找到 store实例当中进行添加内容对应 username 的具体工作的 schedual 即可.
-  console.log(newScehdualObj);
-  // let newScehdual = {};
-  // if (user.role.manager) {
-  // } else {
-  //   //权限不够, 无法给店铺添加新的路由.
-  // }
 });
 
 // //查找指定内容根据 id

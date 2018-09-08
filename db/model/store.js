@@ -58,34 +58,40 @@ const StoreSchema = new mongoose.Schema({
       }
     }
   },
-  Schedual: [
+  weeklySchedual: [
     {
-      weeklySchedual: {
-        username: {
-          type: String,
-          required: true
-        },
-        workdays: [
-          {
-            date: {
-              type: Number,
-              required: true
-            },
-            startTime: {
-              type: Number,
-              required: true
-            },
-            offTime: {
-              type: Number,
-              required: true
-            },
-            estimatePeriod: {
-              type: Number,
-              required: true
+      //因为每周按照周一作为开始, 所以使用周一的时间点作为一个周的标识.
+      MondayDate: {
+        type: String,
+        required: true
+      },
+      //本周所有员工的班表是一个数组, 每个员工是一个元素
+      stuffSchedual: [
+        {
+          //使用 username 作为区分员工的标识.区分大小写. 需要进行验证, 如果员工数据库找不到这个名字则无法查看班时.
+          username: {
+            type: String,
+            required: true
+          },
+          //该员工的本周班表也是一个数组, 每一个工作日是一个元素.
+          weekSchedual: [
+            {
+              week: {
+                type: String,
+                required: true
+              },
+              startTime: {
+                type: String,
+                required: true
+              },
+              offTime: {
+                type: String,
+                required: true
+              }
             }
-          }
-        ]
-      }
+          ]
+        }
+      ]
     }
   ],
   formula: [
@@ -195,6 +201,41 @@ StoreSchema.statics = {
       } else {
         reject(` No rights to change message board`);
       }
+    });
+  },
+  createMondayDate(storeId, MondayDate) {
+    return new Promise((resolve, reject) => {
+      //查找对应店铺实例当中, 是否有指定 MondayDate 为日期的记录, 如果没有则进行创建
+      Store.findByIdAndUpdate(
+        storeId,
+        {
+          //在对应商店的实例当中的数组 weeklySchedual 中插入MondayDate 变量给 MondayDate字段.
+          $push: { weeklySchedual: MondayDate }
+        },
+        { safe: true, upsert: true }
+      )
+        .then(store => {
+          resolve(store);
+        })
+        .catch(e => {
+          reject(`Can not create MondayDate for the store ${e}`);
+        });
+    });
+  },
+  //添加员工的workday信息
+  createStuffSchedual(storeId, MondayDate, username, weekSchedual) {
+    return new Promise((resolve, reject) => {
+      Store.findById(storeId)
+        .then(store => {
+          let theWeek = store.weeklySchedual.filter(element => {
+            return toString(element.MondayDate) === toString(MondayDate);
+          });
+          //暂停在这里
+          console.log(`theWeek is ${theWeek[0]}`);
+        })
+        .catch(e => {
+          console.log(`Cannot find the store.`);
+        });
     });
   }
 };
