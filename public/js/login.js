@@ -15,6 +15,19 @@ document.querySelector("#register-btn").addEventListener("click", function(e) {
   location.assign("/reg");
 });
 
+// let visitme = function(token) {
+//   const requestToMe = new XMLHttpRequest();
+//   requestToMe.addEventListener("readystatechange", function(e) {
+//     if (e.target.readyState === 4) {
+//       location.assign(`/me#${token}`);
+//     }
+//   });
+//   requestToMe.open("get", "http://localhost:3000/me", true);
+//   requestToMe.setRequestHeader("Content-Type", "application/json");
+//   requestToMe.setRequestHeader("x-auth", token);
+//   requestToMe.send();
+// };
+
 //使用 XMLHttpRequest 请求的案例:
 //点击登录按钮之后的操作
 document.querySelector("#login-form").addEventListener("submit", function(e) {
@@ -38,6 +51,7 @@ document.querySelector("#login-form").addEventListener("submit", function(e) {
             let token = header.slice(87, 258);
             //把 token 放入到 hash 里面,方便跨页面使用同一个 token
             location.assign(`/me#${token}`);
+            // visitme(token);
           } else if (data.permition === false) {
             console.log("you need to wait until approved");
             location.assign("/regWait");
