@@ -118,7 +118,7 @@ PeopleSchema.methods = {
   toJson: function() {
     let user = this;
     let userObj = user.toObject();
-    return _.pick(userObj, ["_id", "email", "permition"]);
+    return _.pick(userObj, ["_id", "email", "permition", "username"]);
   },
   removeToken(token) {
     let user = this;
