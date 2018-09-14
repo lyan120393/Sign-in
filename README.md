@@ -57,6 +57,28 @@ next todo:
 3. - []创建班表查询路由, 根据用户名称, 或者是本周开始的日期查看个人整周班表,以及所有人的整周班表.
 4. - []解决用户直接访问/ me 导致的问题, 即使没有 token 也会进入该页面, 并查看到默认的数据.
 
+2018/9/14
+
+1. 现在 /editcheck 路由会查找指定日期的记录, 如果找到会把整个工作日的全部内容返回给用户
+2. 现在 /user/editMessageBoard 路由一旦用户提交了新的内容, 会重新把最新的内容发送给用户
+3. 只做了三个 modal , 一个给 messageboard 的编辑页面, 另外的两个是给 signIn 和 signOut 按钮的 modal.
+4. 现在 People 的 toJson 功能, 也可以返回 role 的相关信息, 这样可以根据用户权限去让用户修改留言板.
+5. Store 的 editMessage 功能被进行了修改, 可以返回全部的 messageBoard 信息.
+6. 修复渲染 me 页面的时候, mins 由于小数点导致的超多位数, 目前只精确到整数分钟位.
+7. checkSignIn 功能可以向服务器的 /editcheck 路由发送请求, 查看某一日是否有签到记录.
+8. 完成 me 页面的 renderMe 这个功能, 在页面载入的时候,根据传入的数据时段不同, 分别进行渲染页面上的内容.
+9. 完成计算前一个或者后一个为 5 的倍数的时间计算功能, 如果此时时间是 12:21, 那么 before 就是 12:20, after 就是 12:25.
+10. nearTime 功能可以根据 pass in 的 moment() 时间去计算 after 和 before 时间.
+11. 完成点击按钮 signIn, signOut 之后的逻辑判断, 可以根据 checkSignIn 功能的结果正确显示需要看到的 Modal 信息.
+12. 完成三个 messageboard 的 edit 按钮的点击之后的操作. 使用一个 modal 根据点击的按钮不同进行修改内容.
+13. 完成 messageBoard 的 modal 的提交修改内容的按钮的逻辑, 点击提交之后会自动 hide modal, 并重新刷新页面.
+
+2018/9/13
+
+1. 把页面上的按钮 edit Record 和 delete Record 的位置进行移除, 打算放在 table 的尾部方便去操作指定的 table.
+2. 完成 messageBoard 的三个编辑按钮的控制逻辑, 并能够弹出 modal 进行输入内容, 检查用户权限进行提交并更新.
+3. 学习和研究 modal 的使用, 以及如何通过 modal 输入信息, 发送信息给服务器, 并最终重新渲染页面.
+
 2018/9/11
 
 1. 完成了 personal page 页面的内容渲染,

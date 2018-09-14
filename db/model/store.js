@@ -120,59 +120,76 @@ StoreSchema.statics = {
     timeStamp,
     username
   ) {
+    // console.log(
+    //   `belongStore is ${belongStore},userrole is ${userrole}, messageField is ${messageField}, messageContent is ${messageContent}, timeStamp is ${timeStamp}, username is ${username} `
+    // );
     return new Promise((resolve, reject) => {
       //先进行用户权限和所尝试修改的留言板进行判断
       let changeMessageBoard = function() {
         if (messageField === "kitchenMessage") {
-          Store.findByIdAndUpdate(belongStore, {
-            $set: {
-              "messageBoard.kitchenMessage": {
-                message: messageContent,
-                timeStamp: timeStamp,
-                username: username
+          Store.findByIdAndUpdate(
+            belongStore,
+            {
+              $set: {
+                "messageBoard.kitchenMessage": {
+                  message: messageContent,
+                  timeStamp: timeStamp,
+                  username: username
+                }
               }
-            }
-          })
-            .then(doc => {
+            },
+            { new: true }
+          )
+            .then(store => {
               //成功之后的对数据库的操作记录
-              console.log(doc);
-              resolve("Message successful added");
+              // console.log(doc);
+              resolve(store.messageBoard);
             })
             .catch(e => {
               reject(`Error when trying to update message board ${e}`);
             });
         } else if (messageField === "frontMessage") {
-          Store.findByIdAndUpdate(belongStore, {
-            $set: {
-              "messageBoard.frontMessage": {
-                message: messageContent,
-                timeStamp: timeStamp,
-                username: username
+          Store.findByIdAndUpdate(
+            belongStore,
+            {
+              $set: {
+                "messageBoard.frontMessage": {
+                  message: messageContent,
+                  timeStamp: timeStamp,
+                  username: username
+                }
               }
-            }
-          })
-            .then(doc => {
+            },
+            { new: true }
+          )
+            .then(store => {
               //成功之后的对数据库的操作记录
-              console.log(doc);
-              resolve("Message successful added");
+              // console.log(doc);
+              // resolve("Message successful added");
+              resolve(store.messageBoard);
             })
             .catch(e => {
               reject(`Error when trying to update message board ${e}`);
             });
         } else if (messageField === "managerMessage") {
-          Store.findByIdAndUpdate(belongStore, {
-            $set: {
-              "messageBoard.managerMessage": {
-                message: messageContent,
-                timeStamp: timeStamp,
-                username: username
+          Store.findByIdAndUpdate(
+            belongStore,
+            {
+              $set: {
+                "messageBoard.managerMessage": {
+                  message: messageContent,
+                  timeStamp: timeStamp,
+                  username: username
+                }
               }
-            }
-          })
-            .then(doc => {
+            },
+            { new: true }
+          )
+            .then(store => {
               //成功之后的对数据库的操作记录
-              console.log(doc);
-              resolve("Message successful added");
+              // console.log(doc);
+              // resolve("Message successful added");
+              resolve(store.messageBoard);
             })
             .catch(e => {
               reject(`Error when trying to update message board ${e}`);

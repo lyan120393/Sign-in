@@ -71,8 +71,10 @@ let renderPeriod = periodData => {
     tabletdSignIn.innerHTML = moment.unix(element.signIn).format("HH:mm");
     tabletdSignOut.innerHTML = moment.unix(element.signOut).format("HH:mm");
     tabletdHours.innerHTML = Math.floor(element.hours / 3600);
-    tabletdMins.innerHTML =
-      (element.hours / 3600 - Math.floor(element.hours / 3600)) * 60;
+    tabletdMins.innerHTML = (
+      (element.hours / 3600 - Math.floor(element.hours / 3600)) *
+      60
+    ).toFixed();
     tabletdDrinks.innerHTML = element.drink;
     tabletdApptizers.innerHTML = element.apptizer;
     tabletdNotes.innerHTML = element.note;
@@ -133,11 +135,60 @@ let renderMessageBoard = function(messageBoardData) {
   }
 };
 
+//检测指定日期是否有签到的记录
+let checkSignIn = function(time) {
+  return new Promise((resolve, reject) => {
+    let checkSignInObj = {
+      // dateMM: moment(time).format("MM"),
+      // dateDD: moment(time).format("DD"),
+      // dateYYYY: moment(time).format("YYYY")
+      dateMM: 9,
+      dateDD: 11,
+      dateYYYY: 2018
+    };
+    const requestForCheck = new XMLHttpRequest();
+    requestForCheck.addEventListener("readystatechange", function(e) {
+      if (e.target.readyState === 4) {
+        let result = e.target.responseText;
+        if (result === "the day not found") {
+          //没有找到这一天的签到记录,
+          //如果是 signIn, 将执行签到程序,
+          //如果是 SignOut, 拒绝SignOut, 并提示 signIn 先.
+          // console.log(result);
+          reject(result);
+        } else {
+          // result = JSON.parse(result);
+          // 如果是 SignIn 功能, 找到了这一天的工作记录, 把工作记录显示在 modal 上面.
+          // 如果是 SignOut 功能,找到这一天的工作记录之后, 查看是否 signOut 字段有信息,如果有则显示信息在 modal 上.如果没有则进行SignOut 程序.
+          result = JSON.parse(result);
+          resolve(result);
+          // console.log(`the day is ${result}`);
+        }
+      }
+    });
+    requestForCheck.open("post", "http://localhost:3000/editcheck", true);
+    requestForCheck.setRequestHeader("Content-Type", "application/json");
+    requestForCheck.setRequestHeader("x-auth", token);
+    requestForCheck.send(JSON.stringify(checkSignInObj));
+  });
+};
+
+//根据接收到的数据类型进行渲染页面的操作.
 let renderMe = localData => {
   if (localData.username) {
     document.querySelector("#username").textContent = `Welcome, ${
       localData.username
     }!`;
+    //渲染页面上的Message 按钮为 disable 根据用户的权限.
+    if (!localData.role.manager) {
+      document.querySelector("#manager-btn").setAttribute("disabled", "");
+    }
+    if (!localData.role.front) {
+      document.querySelector("#front-btn").setAttribute("disabled", "");
+    }
+    if (!localData.role.kitchen) {
+      document.querySelector("#kitchen-btn").setAttribute("disabled", "");
+    }
   }
   //只有员工的工作记录是数组, 存在长度
   if (localData.length > 0) {
@@ -148,9 +199,255 @@ let renderMe = localData => {
     localData.frontMessage ||
     localData.kitchenMessage
   ) {
+    // console.log(`remderMe is called`);
     renderMessageBoard(localData);
   }
 };
+
+let calculateTimeAfter = function(time) {
+  //接受一个 moment() 对象, 返回一个 moment()对象.
+  let timeAfter;
+  // console.log(`Start calculate timeAfter`);
+  let counter = 0;
+  do {
+    counter++;
+    timeAfter = moment(time).add(counter, "minutes");
+  } while (!Number.isInteger(Number(timeAfter.format("mm")) / 5));
+  // console.log(
+  //   `Number.isInteger(Number(timeAfter.format("mm")) / 5) is ${!Number.isInteger(
+  //     Number(timeAfter.format("mm")) / 5
+  //   )}`
+  // );
+  // console.log(`the new result of timeAfter is ${timeAfter.format("HH:mm")}`);
+  return timeAfter;
+};
+
+let calculateTimeBefore = function(time) {
+  //接受一个 moment() 对象, 返回一个 moment()对象.
+  let timeBefore;
+  // console.log(`Start calculate timeBefore`);
+  counter = 0;
+  do {
+    counter++;
+    timeBefore = moment(time).subtract(counter, "minutes");
+  } while (!Number.isInteger(Number(timeBefore.format("mm")) / 5));
+  // console.log(
+  //   `Number.isInteger(Number(timeBefore.format("mm")) / 5) is ${!Number.isInteger(
+  //     Number(timeBefore.format("mm")) / 5
+  //   )}`
+  // );
+  // console.log(`the new result of timeBefore is ${timeBefore.format("HH:mm")}`);
+  return timeBefore;
+};
+
+let nearTime = function(time) {
+  //假设 time 12:01
+  // let time = moment.unix(1536710400);
+  let timeBefore;
+  let timeAfter;
+  let timeNearst;
+  let result;
+  //得到一个分钟的时间, 这个是原始的时间. 01,29 32这样的时间.
+  // console.log(`Origional time is ${moment(time).format("HH:mm")}`);
+  //判断如果 result 为整数, 那么则确定是五的倍数, 否则就不是, 但是0不能除以任何数.
+  //需要提前判断如果分钟数等于00, 则直接设定为显示的结果.不可以进行除法运算.
+  if (moment(time).format("mm") != "00") {
+    //使用除法将分钟数除以5,
+    result = Number(moment(time).format("mm")) / 5;
+    // console.log(`Number(moment(time).format("mm")) / 5 is ${result}`);
+    if (Number.isInteger(result)) {
+      console.log(`result is integer`);
+      timeAfter = calculateTimeAfter(time);
+      timeBefore = calculateTimeBefore(time);
+      timeNearst = moment(time);
+      // console.log(`timeNearst is ${timeNearst.format("mm")}`);
+    } else {
+      console.log(`result is Not integer`);
+      //现在进行计算 timeAfter
+      timeAfter = calculateTimeAfter(time);
+      //现在进行计算 timeBefore
+      timeBefore = calculateTimeBefore(time);
+      //现在进行计算 timeNearst
+      timeNearst = moment(time);
+      // console.log(`timeNearst is ${timeNearst.format("mm")}`);
+    }
+  } else {
+    console.log(`Time end with 00`);
+    //这个时间就是5的倍数,但是是00, 不可除法运算.
+    timeAfter = calculateTimeAfter(time);
+    timeBefore = calculateTimeBefore(time);
+    timeNearst = moment(time);
+    // console.log(`timeNearst is ${timeNearst.format("mm")}`);
+  }
+  //总和检查一下各种数据.
+  console.log(`timeAfter is ${timeAfter.format("HH:mm")}`);
+  console.log(`timeBefore is ${timeBefore.format("HH:mm")}`);
+  console.log(`timeNearst is ${timeNearst.format("HH:mm")}`);
+  return {
+    timeAfter: timeAfter,
+    timeNearst: timeNearst,
+    timeBefore: timeBefore
+  };
+};
+
+//clock In 的五个按钮
+//sign In 按钮
+document.querySelector("#signIn-btn").addEventListener("click", function(e) {
+  e.preventDefault();
+  //获取时间点
+  ///signIn路由只支持输入 HH mm, 所以必须当天签入, 当天签出.
+  let time = moment();
+  // console.log(`HH is ${moment(time).format("HH")}`);
+  // console.log(`mm is ${moment(time).format("mm")}`);
+
+  //向服务器发送请求查看当天是否已经存在过签到记录, 如果有则在 modal 中提示, 今天已经签到了.
+  checkSignIn(time)
+    .then(result => {
+      //找到这一天的签到记录, 把信息显示在 modal 上面.
+      //隐藏签到时间的按钮
+      document
+        .querySelector("#signInModal-SignInAvaTime")
+        .setAttribute("class", "d-none");
+      document.querySelector(
+        "#signInModal-SignedInInfo-signIn"
+      ).textContent = `signIn: ${moment.unix(result.signIn).format("HH:mm")}`;
+      document.querySelector(
+        "#signInModal-SignedInInfo-signOut"
+      ).textContent = `signOut: ${moment.unix(result.signOut).format("HH:mm")}`;
+      document.querySelector(
+        "#signInModal-SignedInInfo-hours"
+      ).textContent = `Hours: ${Math.floor(result.hours / 3600)} hours ${(
+        (result.hours / 3600 - Math.floor(result.hours / 3600)) *
+        60
+      ).toFixed()} mins`;
+      document.querySelector(
+        "#signInModal-SignedInInfo-apptizer"
+      ).textContent = `apptizer: ${result.apptizer}`;
+      document.querySelector(
+        "#signInModal-SignedInInfo-drink"
+      ).textContent = `drink: ${result.drink}`;
+      document.querySelector(
+        "#signInModal-SignedInInfo-note"
+      ).textContent = `note: ${result.note}`;
+    })
+    .catch(e => {
+      //没有找到这一天的签到记录, 将执行签到程序.
+      //如果没有签到记录, 弹出一个 modal 窗口,根据点击的时间段进行判断相关的时间点,  弹出三个带有时间的按钮,前后误差不超过5-10分钟的那种.
+      //选择某个按钮之后, 执行真正的签到程序, 开始向服务器发送签到请求.
+      //如果成功, 那么带着返回的信息区域的内容, 渲染页面即可.
+      if (e === "the day not found") {
+        //把显示已经签到过的内容设置为隐藏.
+        document
+          .querySelector("#signInModal-SignedInInfo")
+          .setAttribute("class", "d-none");
+        //根据当前的时间去计算最近的三个时间点.
+        let threeTimes = nearTime(time);
+        //现在根据上面获得的三个时间数据(threeTimes 对象), 去渲染 modal 中对应按钮显示的时间点.
+        document.querySelector(
+          "#signInModal-timeBtn-before"
+        ).textContent = threeTimes.timeBefore.format("HH:mm");
+        document.querySelector(
+          "#signInModal-timeBtn-nearest"
+        ).textContent = threeTimes.timeNearst.format("HH:mm");
+        document.querySelector(
+          "#signInModal-timeBtn-after"
+        ).textContent = threeTimes.timeAfter.format("HH:mm");
+      } else {
+        console.log(`Other Error when use checkSignIn() ${e}`);
+      }
+    });
+});
+//sign Out 按钮
+document.querySelector("#signOut-btn").addEventListener("click", function(e) {
+  e.preventDefault();
+  //获取时间点
+  let time = moment();
+  checkSignIn(time)
+    .then(result => {
+      //找到签到记录, 检查 signOut 记录是否有值, 如果有则显示无法 SignOut.
+      if (result.signOut) {
+        //如果 signOut 记录存在.
+        document
+          .querySelector("#signOutModal-signInFirst")
+          .setAttribute("class", "d-none");
+        document
+          .querySelector("#signOutModal-SignOutAvaTime")
+          .setAttribute("class", "d-none");
+        document.querySelector(
+          "#signOutModal-SignedInInfo-signIn"
+        ).textContent = `signIn: ${moment.unix(result.signIn).format("HH:mm")}`;
+        document.querySelector(
+          "#signOutModal-SignedInInfo-signOut"
+        ).textContent = `signOut: ${moment
+          .unix(result.signOut)
+          .format("HH:mm")}`;
+        document.querySelector(
+          "#signOutModal-SignedInInfo-hours"
+        ).textContent = `Hours: ${Math.floor(result.hours / 3600)} hours ${(
+          (result.hours / 3600 - Math.floor(result.hours / 3600)) *
+          60
+        ).toFixed()} mins`;
+        document.querySelector(
+          "#signOutModal-SignedInInfo-apptizer"
+        ).textContent = `apptizer: ${result.apptizer}`;
+        document.querySelector(
+          "#signOutModal-SignedInInfo-drink"
+        ).textContent = `drink: ${result.drink}`;
+        document.querySelector(
+          "#signOutModal-SignedInInfo-note"
+        ).textContent = `note: ${result.note}`;
+      } else {
+        //如果有记录, 也就是说有 signIn 的记录,但是没有 signOut 的记录, 则进行 signOut 程序.
+        //如果 signOut 记录不存在.
+        //如果 signOut 没有值, 则进行 signOut 程序.
+        console.log(`select your signOut time`);
+        document
+          .querySelector("#signOutModal-signInFirst")
+          .setAttribute("class", "d-none");
+        document
+          .querySelector("#signOutModal-SignedInInfo")
+          .setAttribute("class", "d-none");
+        //根据当前的时间 time 去计算下班时间. 也是大概前后5分钟的, 跟 signIn 是一样的逻辑.
+        let threeTimes = nearTime(time);
+        //现在根据上面获得的三个时间数据(threeTimes 对象), 去渲染 modal 中对应按钮显示的时间点.
+        document.querySelector(
+          "#signOutModal-timeBtn-before"
+        ).textContent = threeTimes.timeBefore.format("HH:mm");
+        document.querySelector(
+          "#signOutModal-timeBtn-nearest"
+        ).textContent = threeTimes.timeNearst.format("HH:mm");
+        document.querySelector(
+          "#signOutModal-timeBtn-after"
+        ).textContent = threeTimes.timeAfter.format("HH:mm");
+      }
+    })
+    .catch(e => {
+      //如果发生错误, 检查是否是 the day not found, 如果是的话, 提示先SignIn, 才能 SignOut.
+      if (e === "the day not found") {
+        console.log(`You need signIn first before signOut`);
+        document
+          .querySelector("#signOutModal-SignOutAvaTime")
+          .setAttribute("class", "d-none");
+        document
+          .querySelector("#signOutModal-SignedInInfo")
+          .setAttribute("class", "d-none");
+      } else {
+        console.log(`Other Error when use checkSignIn() ${e}`);
+      }
+    });
+  //向服务器发送请求, 查看今天的工作记录中是否存在 signOut 的记录, 如果有则显示工作日的信息 在 modal 中.(根据请求结果渲染 modal 在页面上)
+  //如果没有signOut 记录, 弹出一个 modal 窗口,根据点击的时间段进行判断相关的时间点,  弹出三个带有时间的按钮(以及一个可以自由设置 sign out 的时间功能), signOut 不存在误差的问题.
+  //选择某个按钮之后, 或者选择好了一个时间点击 submit 之后, 执行真正的signOut程序, 开始向服务器发送signOut请求.
+  //如果成功, 那么带着返回的信息区域的内容, 渲染页面即可.
+});
+//Resign 按钮
+document.querySelector("#reSign-btn").addEventListener("click", function(e) {
+  e.preventDefault();
+  //弹出 modal , 让用户输入 signIn 的时间, 和 signOut 的时间, 然后点击提交之后开始向服务器发送请求.
+  //如果已经存在记录则进行替换.
+  //如果没有记录则进行签到.
+  //并把返回的结果显示在页面上.
+});
 
 //当页面加载的时候,我们可以执行的脚本.
 window.onload = function() {
@@ -233,3 +530,88 @@ window.onload = function() {
   requestForMessageBoard.setRequestHeader("x-auth", token);
   requestForMessageBoard.send();
 };
+
+//给 Message Board 的三个按钮添加事件操作
+document.querySelector("#manager-btn").addEventListener("click", function(e) {
+  e.preventDefault();
+  document.querySelector("#exampleModalLabel").textContent =
+    "Edit Manager Message Board:";
+});
+document.querySelector("#front-btn").addEventListener("click", function(e) {
+  e.preventDefault();
+  document.querySelector("#exampleModalLabel").textContent =
+    "Edit Front Message Board:";
+});
+document.querySelector("#kitchen-btn").addEventListener("click", function(e) {
+  e.preventDefault();
+  document.querySelector("#exampleModalLabel").textContent =
+    "Edit Kitchen Message Board:";
+});
+
+//Modal 中的 submit 按钮按下去的时候, 执行的操作.
+document.querySelector("#modal-submit").addEventListener("click", function(e) {
+  //首先进行权限判断, 如果不符合权限则无法修改.
+  let user = JSON.parse(getFromLocal("userInfoData"));
+  let messageField;
+  //判断当前修改的 messageField 当中的内容.
+  if (
+    document.querySelector("#exampleModalLabel").textContent ===
+    "Edit Manager Message Board:"
+  ) {
+    messageField = "managerMessage";
+  } else if (
+    document.querySelector("#exampleModalLabel").textContent ===
+    "Edit Front Message Board:"
+  ) {
+    messageField = "frontMessage";
+  } else if (
+    document.querySelector("#exampleModalLabel").textContent ===
+    "Edit Kitchen Message Board:"
+  ) {
+    messageField = "kitchenMessage";
+  }
+  //判断用户的角色权限 和 尝试修改的内容是否一致. 如果一致则赋予信息内容.
+  let message;
+  if (user.role.manager) {
+    message = document.querySelector("#message-text").value;
+  } else if (user.role.front && messageField === "frontMessage") {
+    message = document.querySelector("#message-text").value;
+  } else if (user.role.kitchen && messageField === "kitchenMessage") {
+    message = document.querySelector("#message-text").value;
+  }
+  //如果 message 为 undefiend, 那么就是权限不够无法赋予信息, 如果权限足够则会显示为空.
+  // console.log(`message is ${message}, messageField is ${messageField}`);
+  $("#exampleModal").modal("hide");
+  if (message != undefined) {
+    // 向服务器发出更新 messageBoard 的请求.
+    let messageEditObj = {
+      message,
+      messageField
+    };
+    const requestForEditMessageBoard = new XMLHttpRequest();
+    requestForEditMessageBoard.addEventListener("readystatechange", function(
+      e
+    ) {
+      if (e.target.readyState === 4) {
+        //获得服务器返回的最新的 messageBoard 的信息
+        const messageBoardData = JSON.parse(e.target.responseText);
+        console.log(messageBoardData);
+        saveToLocal("messageBoardData", messageBoardData);
+        //使用 renderMe 功能重新渲染页面.
+        renderMe(messageBoardData);
+      }
+    });
+    requestForEditMessageBoard.open(
+      "post",
+      "http://localhost:3000/user/editMessageBoard",
+      true
+    );
+    //发送的req.body 当中的格式是 JSON 格式. 服务器会有中间件把他们转为 Javascript Object
+    requestForEditMessageBoard.setRequestHeader(
+      "Content-Type",
+      "application/json"
+    );
+    requestForEditMessageBoard.setRequestHeader("x-auth", token);
+    requestForEditMessageBoard.send(JSON.stringify(messageEditObj));
+  }
+});

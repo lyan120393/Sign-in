@@ -454,11 +454,11 @@ app.post("/editcheck", authentic, (req, res) => {
     workdayPromise
       .then(index => {
         // user.deleteAndSaveTheDay(index);
-        //返回这一天的记录
+        //返回这一天找到的记录
         res.status(200).send(user.workdays[index]);
       })
       .catch(e => {
-        res.status(400).send(`${e}`);
+        res.status(200).send(`the day not found`);
       });
   }
 });
@@ -673,6 +673,7 @@ app.post("/user/editMessageBoard", authentic, (req, res) => {
   //得到所有的信息内容和编辑的信息部分
   let user = req.user;
   let editObj = _.pick(req.body, ["message", "messageField"]);
+  // console.log(editObj);
   editObj.timeStamp = toUnix();
   editObj.username = user.username;
   //验证员工权限, 是否可以修改所对应的信息部分
@@ -685,8 +686,8 @@ app.post("/user/editMessageBoard", authentic, (req, res) => {
     editObj.timeStamp,
     editObj.username
   )
-    .then(result => {
-      res.status(200).send({ message: result });
+    .then(messageBoard => {
+      res.status(200).send(messageBoard);
     })
     .catch(e => {
       res.status(400).send({ message: e });
