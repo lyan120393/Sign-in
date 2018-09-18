@@ -10,6 +10,44 @@ document.querySelector("#manager-btn").addEventListener("click", function(e) {
   //从这里开始写点击按钮之后的业务代码
 });
 
+//检查是否存在今天的记录, 如果存在则进行设置 clock in 的 message 区域.
+let setClockInMessage = function(periodData) {
+  let todayRecord = periodData.filter(element => {
+    //最近七天的记录中, 如果某一天的日期和今天是一样的,代表已经签过到.
+    return (
+      moment(moment.unix(element.signIn)).format("MM-DD-YYYY") ===
+      moment().format("MM-DD-YYYY")
+    );
+  });
+  console.log(todayRecord);
+  //如果今天存在记录, 则进行渲染给 clock In 的 message 区域.
+  if (todayRecord[0]) {
+    if (todayRecord[0].signIn && !todayRecord[0].signOut) {
+      document.querySelector(
+        "#todayRecord"
+      ).textContent = `SignIn Success. Don't forget to signOut`;
+    } else if (todayRecord[0].signOut) {
+      document.querySelector("#todayRecord").textContent = `SignOut success`;
+    } else {
+      document.querySelector("#todayRecord").textContent = "";
+    }
+  }
+};
+let setClockInMessagePassedByMoment = function(unixtime) {
+  //把传入的时刻和今天进行对比, 如果一致则为真, 代表今天已经被签到了.
+  //如果今天存在记录, 则进行渲染给 clock In 的 message 区域.
+  if (
+    moment(moment.unix(unixtime)).format("MM-DD-YYYY") ===
+    moment().format("MM-DD-YYYY")
+  ) {
+    document.querySelector(
+      "#todayRecord"
+    ).textContent = `SignIn Success. Don't forget to signOut`;
+  } else {
+    document.querySelector("#todayRecord").textContent = "";
+  }
+};
+
 let renderPeriod = periodData => {
   //首先拿到数组, 然后遍历数组的每一个元素, 可以得知每一个工作日的信息.并进行渲染.
   //对数组进行重新排序. 根据他们的返回日期.
@@ -18,23 +56,6 @@ let renderPeriod = periodData => {
   });
 
   //检查是否存在今天的记录, 如果存在则进行设置 clock in 的 message 区域.
-  let setClockInMessage = function(periodData) {
-    let todayRecord = periodData.filter(element => {
-      //最近七天的记录中, 如果某一天的日期和今天是一样的,代表已经签过到.
-      return (
-        moment(moment.unix(element.signIn)).format("MM-DD-YYYY") ===
-        moment().format("MM-DD-YYYY")
-      );
-    });
-    //如果今天存在记录, 则进行渲染给 clock In 的 message 区域.
-    if (todayRecord[0]) {
-      document.querySelector(
-        "#todayRecord"
-      ).textContent = `You have been signIn today.`;
-    } else {
-      document.querySelector("#todayRecord").textContent = "";
-    }
-  };
   setClockInMessage(periodData);
 
   //设置时间段, 一般是一个星期的显示
@@ -69,16 +90,37 @@ let renderPeriod = periodData => {
     tabletdDate.setAttribute("class", "text-nowrap");
     tablethWeek.setAttribute("scope", "row");
     tabletdSignIn.innerHTML = moment.unix(element.signIn).format("HH:mm");
-    tabletdSignOut.innerHTML = moment.unix(element.signOut).format("HH:mm");
-    tabletdHours.innerHTML = Math.floor(element.hours / 3600);
-    tabletdMins.innerHTML = (
-      (element.hours / 3600 - Math.floor(element.hours / 3600)) *
-      60
-    ).toFixed();
-    tabletdDrinks.innerHTML = element.drink;
-    tabletdApptizers.innerHTML = element.apptizer;
-    tabletdNotes.innerHTML = element.note;
+    if (!element.signOut) {
+      tabletdSignOut.innerHTML = "N/A";
+    } else {
+      tabletdSignOut.innerHTML = moment.unix(element.signOut).format("HH:mm");
+    }
+    if (!element.hours) {
+      tabletdHours.innerHTML = "N/A";
+      tabletdMins.innerHTML = "N/A";
+    } else {
+      tabletdHours.innerHTML = Math.floor(element.hours / 3600);
+      tabletdMins.innerHTML = (
+        (element.hours / 3600 - Math.floor(element.hours / 3600)) *
+        60
+      ).toFixed();
+    }
+    if (!element.drink) {
+      tabletdDrinks.innerHTML = "N/A";
+    } else {
+      tabletdDrinks.innerHTML = element.drink;
+    }
+    if (!element.apptizer) {
+      tabletdApptizers.innerHTML = "N/A";
+    } else {
+      tabletdApptizers.innerHTML = element.apptizer;
+    }
     tabletdNotes.setAttribute("class", "text-nowrap");
+    if (!element.note) {
+      tabletdNotes.innerHTML = "N/A";
+    } else {
+      tabletdNotes.innerHTML = element.note;
+    }
 
     //添加 tr 的子元素给与 tr
     tabletr.appendChild(tablethWeek);
@@ -139,12 +181,12 @@ let renderMessageBoard = function(messageBoardData) {
 let checkSignIn = function(time) {
   return new Promise((resolve, reject) => {
     let checkSignInObj = {
-      // dateMM: moment(time).format("MM"),
-      // dateDD: moment(time).format("DD"),
-      // dateYYYY: moment(time).format("YYYY")
-      dateMM: 9,
-      dateDD: 11,
-      dateYYYY: 2018
+      dateMM: moment(time).format("MM"),
+      dateDD: moment(time).format("DD"),
+      dateYYYY: moment(time).format("YYYY")
+      // dateMM: 9,
+      // dateDD: 12,
+      // dateYYYY: 2018
     };
     const requestForCheck = new XMLHttpRequest();
     requestForCheck.addEventListener("readystatechange", function(e) {
@@ -311,24 +353,28 @@ document.querySelector("#signIn-btn").addEventListener("click", function(e) {
       document.querySelector(
         "#signInModal-SignedInInfo-signIn"
       ).textContent = `signIn: ${moment.unix(result.signIn).format("HH:mm")}`;
-      document.querySelector(
-        "#signInModal-SignedInInfo-signOut"
-      ).textContent = `signOut: ${moment.unix(result.signOut).format("HH:mm")}`;
-      document.querySelector(
-        "#signInModal-SignedInInfo-hours"
-      ).textContent = `Hours: ${Math.floor(result.hours / 3600)} hours ${(
-        (result.hours / 3600 - Math.floor(result.hours / 3600)) *
-        60
-      ).toFixed()} mins`;
-      document.querySelector(
-        "#signInModal-SignedInInfo-apptizer"
-      ).textContent = `apptizer: ${result.apptizer}`;
-      document.querySelector(
-        "#signInModal-SignedInInfo-drink"
-      ).textContent = `drink: ${result.drink}`;
-      document.querySelector(
-        "#signInModal-SignedInInfo-note"
-      ).textContent = `note: ${result.note}`;
+      if (result.signOut) {
+        document.querySelector(
+          "#signInModal-SignedInInfo-signOut"
+        ).textContent = `signOut: ${moment
+          .unix(result.signOut)
+          .format("HH:mm")}`;
+        document.querySelector(
+          "#signInModal-SignedInInfo-hours"
+        ).textContent = `Hours: ${Math.floor(result.hours / 3600)} hours ${(
+          (result.hours / 3600 - Math.floor(result.hours / 3600)) *
+          60
+        ).toFixed()} mins`;
+        document.querySelector(
+          "#signInModal-SignedInInfo-apptizer"
+        ).textContent = `apptizer: ${result.apptizer}`;
+        document.querySelector(
+          "#signInModal-SignedInInfo-drink"
+        ).textContent = `drink: ${result.drink}`;
+        document.querySelector(
+          "#signInModal-SignedInInfo-note"
+        ).textContent = `note: ${result.note}`;
+      }
     })
     .catch(e => {
       //没有找到这一天的签到记录, 将执行签到程序.
@@ -357,6 +403,74 @@ document.querySelector("#signIn-btn").addEventListener("click", function(e) {
       }
     });
 });
+//根据传入的textContent 中的内容进行拆分时间, 并得到 HH 和 mm.
+let timeDivider = function(textContent) {
+  let HH = moment(textContent, "HH:mm").format("HH");
+  let mm = moment(textContent, "HH:mm").format("mm");
+  return { HH, mm };
+};
+//给 SignIn 的三个小按钮, 添加向服务器发送请求.
+document
+  .querySelector("#signInModal-timeBtn-before")
+  .addEventListener("click", function(e) {
+    let signInObj = timeDivider(e.target.textContent);
+    console.log(signInObj);
+
+    const requestForSignIn = new XMLHttpRequest();
+    requestForSignIn.addEventListener("readystatechange", function(e) {
+      if (e.target.readyState === 4) {
+        $("#signInModal").modal("hide");
+        console.log(e.target.responseText);
+        let signInRecord = JSON.parse(e.target.responseText);
+        setClockInMessagePassedByMoment(signInRecord.signInTime);
+      }
+    });
+    requestForSignIn.open("post", "http://localhost:3000/signIn", true);
+    requestForSignIn.setRequestHeader("Content-Type", "application/json");
+    requestForSignIn.setRequestHeader("x-auth", token);
+    requestForSignIn.send(JSON.stringify(signInObj));
+  });
+document
+  .querySelector("#signInModal-timeBtn-nearest")
+  .addEventListener("click", function(e) {
+    let signInObj = timeDivider(e.target.textContent);
+    console.log(signInObj);
+
+    const requestForSignIn = new XMLHttpRequest();
+    requestForSignIn.addEventListener("readystatechange", function(e) {
+      if (e.target.readyState === 4) {
+        $("#signInModal").modal("hide");
+        console.log(e.target.responseText);
+        let signInRecord = JSON.parse(e.target.responseText);
+        setClockInMessagePassedByMoment(signInRecord.signInTime);
+      }
+    });
+    requestForSignIn.open("post", "http://localhost:3000/signIn", true);
+    requestForSignIn.setRequestHeader("Content-Type", "application/json");
+    requestForSignIn.setRequestHeader("x-auth", token);
+    requestForSignIn.send(JSON.stringify(signInObj));
+  });
+document
+  .querySelector("#signInModal-timeBtn-after")
+  .addEventListener("click", function(e) {
+    let signInObj = timeDivider(e.target.textContent);
+    console.log(signInObj);
+
+    const requestForSignIn = new XMLHttpRequest();
+    requestForSignIn.addEventListener("readystatechange", function(e) {
+      if (e.target.readyState === 4) {
+        $("#signInModal").modal("hide");
+        console.log(e.target.responseText);
+        let signInRecord = JSON.parse(e.target.responseText);
+        setClockInMessagePassedByMoment(signInRecord.signInTime);
+      }
+    });
+    requestForSignIn.open("post", "http://localhost:3000/signIn", true);
+    requestForSignIn.setRequestHeader("Content-Type", "application/json");
+    requestForSignIn.setRequestHeader("x-auth", token);
+    requestForSignIn.send(JSON.stringify(signInObj));
+  });
+
 //sign Out 按钮
 document.querySelector("#signOut-btn").addEventListener("click", function(e) {
   e.preventDefault();
@@ -373,6 +487,9 @@ document.querySelector("#signOut-btn").addEventListener("click", function(e) {
         document
           .querySelector("#signOutModal-SignOutAvaTime")
           .setAttribute("class", "d-none");
+        document
+          .querySelector("#signOutModal-SignOutOthers")
+          .setAttribute("class", "d-none");
         document.querySelector(
           "#signOutModal-SignedInInfo-signIn"
         ).textContent = `signIn: ${moment.unix(result.signIn).format("HH:mm")}`;
@@ -387,15 +504,21 @@ document.querySelector("#signOut-btn").addEventListener("click", function(e) {
           (result.hours / 3600 - Math.floor(result.hours / 3600)) *
           60
         ).toFixed()} mins`;
-        document.querySelector(
-          "#signOutModal-SignedInInfo-apptizer"
-        ).textContent = `apptizer: ${result.apptizer}`;
-        document.querySelector(
-          "#signOutModal-SignedInInfo-drink"
-        ).textContent = `drink: ${result.drink}`;
-        document.querySelector(
-          "#signOutModal-SignedInInfo-note"
-        ).textContent = `note: ${result.note}`;
+        if (result.apptizer) {
+          document.querySelector(
+            "#signOutModal-SignedInInfo-apptizer"
+          ).textContent = `apptizer: ${result.apptizer}`;
+        }
+        if (result.drink) {
+          document.querySelector(
+            "#signOutModal-SignedInInfo-drink"
+          ).textContent = `drink: ${result.drink}`;
+        }
+        if (result.note) {
+          document.querySelector(
+            "#signOutModal-SignedInInfo-note"
+          ).textContent = `note: ${result.note}`;
+        }
       } else {
         //如果有记录, 也就是说有 signIn 的记录,但是没有 signOut 的记录, 则进行 signOut 程序.
         //如果 signOut 记录不存在.
@@ -431,6 +554,9 @@ document.querySelector("#signOut-btn").addEventListener("click", function(e) {
         document
           .querySelector("#signOutModal-SignedInInfo")
           .setAttribute("class", "d-none");
+        document
+          .querySelector("#signOutModal-SignOutOthers")
+          .setAttribute("class", "d-none");
       } else {
         console.log(`Other Error when use checkSignIn() ${e}`);
       }
@@ -440,14 +566,96 @@ document.querySelector("#signOut-btn").addEventListener("click", function(e) {
   //选择某个按钮之后, 或者选择好了一个时间点击 submit 之后, 执行真正的signOut程序, 开始向服务器发送signOut请求.
   //如果成功, 那么带着返回的信息区域的内容, 渲染页面即可.
 });
+//signOut Modal 当中的三个小按钮.
+document
+  .querySelector("#signOutModal-timeBtn-before")
+  .addEventListener("click", function(e) {
+    let signOutObj = timeDivider(e.target.textContent);
+    //signOut 不仅仅需要的是 sign Out 的时间, 还需要小吃, 饮料和 note
+    signOutObj.apptizer = document.querySelector(
+      "#SignOutModal-apptizer"
+    ).value;
+    signOutObj.drink = document.querySelector("#SignOutModal-drink").value;
+    signOutObj.note = document.querySelector("#SignOutModal-notes").value;
+    console.log(signOutObj);
+
+    const requestForSignOut = new XMLHttpRequest();
+    requestForSignOut.addEventListener("readystatechange", function(e) {
+      if (e.target.readyState === 4) {
+        $("#signOutModal").modal("hide");
+        console.log(e.target.responseText);
+        let signInRecord = JSON.parse(e.target.responseText);
+        setClockInMessagePassedByMoment(signInRecord.signInTime);
+      }
+    });
+    requestForSignOut.open("post", "http://localhost:3000/signOut", true);
+    requestForSignOut.setRequestHeader("Content-Type", "application/json");
+    requestForSignOut.setRequestHeader("x-auth", token);
+    requestForSignOut.send(JSON.stringify(signOutObj));
+  });
+document
+  .querySelector("#signOutModal-timeBtn-nearest")
+  .addEventListener("click", function(e) {
+    let signOutObj = timeDivider(e.target.textContent);
+    //signOut 不仅仅需要的是 sign Out 的时间, 还需要小吃, 饮料和 note
+    signOutObj.apptizer = document.querySelector(
+      "#SignOutModal-apptizer"
+    ).value;
+    signOutObj.drink = document.querySelector("#SignOutModal-drink").value;
+    signOutObj.note = document.querySelector("#SignOutModal-notes").value;
+    console.log(signOutObj);
+
+    const requestForSignOut = new XMLHttpRequest();
+    requestForSignOut.addEventListener("readystatechange", function(e) {
+      if (e.target.readyState === 4) {
+        $("#signOutModal").modal("hide");
+        console.log(e.target.responseText);
+        let signInRecord = JSON.parse(e.target.responseText);
+        setClockInMessagePassedByMoment(signInRecord.signInTime);
+      }
+    });
+    requestForSignOut.open("post", "http://localhost:3000/signOut", true);
+    requestForSignOut.setRequestHeader("Content-Type", "application/json");
+    requestForSignOut.setRequestHeader("x-auth", token);
+    requestForSignOut.send(JSON.stringify(signOutObj));
+  });
+document
+  .querySelector("#signOutModal-timeBtn-after")
+  .addEventListener("click", function(e) {
+    let signOutObj = timeDivider(e.target.textContent);
+    //signOut 不仅仅需要的是 sign Out 的时间, 还需要小吃, 饮料和 note
+    signOutObj.apptizer = document.querySelector(
+      "#SignOutModal-apptizer"
+    ).value;
+    signOutObj.drink = document.querySelector("#SignOutModal-drink").value;
+    signOutObj.note = document.querySelector("#SignOutModal-notes").value;
+    console.log(signOutObj);
+
+    const requestForSignOut = new XMLHttpRequest();
+    requestForSignOut.addEventListener("readystatechange", function(e) {
+      if (e.target.readyState === 4) {
+        $("#signOutModal").modal("hide");
+        console.log(e.target.responseText);
+        let signInRecord = JSON.parse(e.target.responseText);
+        setClockInMessagePassedByMoment(signInRecord.signInTime);
+      }
+    });
+    requestForSignOut.open("post", "http://localhost:3000/signOut", true);
+    requestForSignOut.setRequestHeader("Content-Type", "application/json");
+    requestForSignOut.setRequestHeader("x-auth", token);
+    requestForSignOut.send(JSON.stringify(signOutObj));
+  });
+
 //Resign 按钮
-document.querySelector("#reSign-btn").addEventListener("click", function(e) {
-  e.preventDefault();
-  //弹出 modal , 让用户输入 signIn 的时间, 和 signOut 的时间, 然后点击提交之后开始向服务器发送请求.
-  //如果已经存在记录则进行替换.
-  //如果没有记录则进行签到.
-  //并把返回的结果显示在页面上.
-});
+// document.querySelector("#reSign-btn").addEventListener("click", function(e) {
+//   e.preventDefault();
+//   //弹出新的 modal , 让用户输入 signIn 的时间, 和 signOut 的时间, 然后点击提交之后开始向服务器发送请求.
+
+//   //如果已经存在记录则无法通过 resignIn 签到.
+//   //如果没有记录则进行签到.
+
+//   //并把返回的结果显示在页面上.
+// });
 
 //当页面加载的时候,我们可以执行的脚本.
 window.onload = function() {
@@ -548,6 +756,116 @@ document.querySelector("#kitchen-btn").addEventListener("click", function(e) {
     "Edit Kitchen Message Board:";
 });
 
+//resign modal 当中的 submit 按钮, 点击之后会自动的隐藏 modal, 并获取 modal 中所有 input 当中的数据.
+document
+  .querySelector("#reSignInModal-submit")
+  .addEventListener("click", function(e) {
+    e.preventDefault();
+
+    //获取该modal上面全部相关的数据
+    let resignObj = {};
+    //the data
+    resignObj.signInDD = document.querySelector("#reSignInModal-day").value;
+    resignObj.signInMM = document.querySelector("#reSignInModal-month").value;
+    resignObj.signInYYYY = document.querySelector("#reSignInModal-year").value;
+    resignObj.signOutDD = document.querySelector("#reSignInModal-day").value;
+    resignObj.signOutMM = document.querySelector("#reSignInModal-month").value;
+    resignObj.signOutYYYY = document.querySelector("#reSignInModal-year").value;
+    //In time
+    resignObj.signInHH = document.querySelector("#reSignInModal-InHH").value;
+    resignObj.signInmm = document.querySelector("#reSignInModal-Inmm").value;
+    //Out time
+    resignObj.signOutHH = document.querySelector("#reSignInModal-OutHH").value;
+    resignObj.signOutmm = document.querySelector("#reSignInModal-Outmm").value;
+    //others
+    resignObj.apptizer = document.querySelector(
+      "#reSignInModal-apptizer"
+    ).value;
+    resignObj.drink = document.querySelector("#reSignInModal-drink").value;
+    resignObj.note = document.querySelector("#reSignInModal-notes").value;
+
+    //并把数据 set 为一个 obj, 这个是一个应对 resign 路由.
+    console.log(resignObj);
+
+    //验证数据是否合法, 如果合法
+    //检查确保数据的类型都是对的.
+
+    //隐藏 modal 模块
+    $("#reSignInModal").modal("hide");
+    //发送数据给服务器的 resign 路由.
+    const requestForResign = new XMLHttpRequest();
+    requestForResign.addEventListener("readystatechange", function(e) {
+      if (e.target.readyState === 4) {
+        const theResignDate = JSON.parse(e.target.responseText);
+        //如果成功的拿到了这一天的数据, 我们可以如下操作.
+        //获取今天的日期通过 moment.js, 并且推算出前一周的日期
+        let today = moment();
+        let theDayBeforeToday7 = moment().subtract(7, "days");
+        //进行判断, 如果这一天的数据和今天的日期之间相差在7天以内, 我们需要给 period 路由发送请求, 获取最新的 perioddata
+        //如果这一天的数据, 和今天的日期相差超过了7天, 就不需要在获得最新的 perioddata 内容.
+        let todayFormat = today.format("YYYY-MM-DD");
+        let theDayBeforeToday7Format = theDayBeforeToday7.format("YYYY-MM-DD");
+        let theDay = moment.unix(theResignDate.signIn).format("YYYY-MM-DD");
+        console.log(todayFormat, theDayBeforeToday7Format, theDay);
+        if (
+          moment(theDay).isBetween(
+            theDayBeforeToday7Format,
+            todayFormat,
+            null,
+            []
+          )
+        ) {
+          //这一天是距离今天七天以内的日期
+          console.log(`between 7 days`);
+          const requestForPeriod = new XMLHttpRequest();
+          requestForPeriod.addEventListener("readystatechange", function(e) {
+            if (e.target.readyState === 4) {
+              const periodData = JSON.parse(e.target.responseText);
+              console.log(periodData);
+              saveToLocal("periodData", periodData);
+              //这里需要的是如何根据返回的数据去进行渲染页面
+              let timeTable = document.querySelector("#table-body");
+              while (timeTable.firstChild) {
+                timeTable.removeChild(timeTable.firstChild);
+              }
+              renderMe(periodData);
+            }
+          });
+          requestForPeriod.open("post", "http://localhost:3000/period", true);
+          //发送的req.body 当中的格式是 JSON 格式. 服务器会有中间件把他们转为 Javascript Object
+          requestForPeriod.setRequestHeader("Content-Type", "application/json");
+          requestForPeriod.setRequestHeader("x-auth", token);
+          //获取今天的日期通过 moment.js, 并且推算出前一周的日期
+          let today = moment();
+          let theDayBeforeToday7 = moment().subtract(7, "days");
+          let periodObj = {
+            dateStartMM: theDayBeforeToday7.get("month") + 1,
+            dateStartDD: theDayBeforeToday7.get("date"),
+            dateStartYYYY: theDayBeforeToday7.get("year"),
+            dateEndMM: today.get("month") + 1,
+            dateEndDD: today.get("date"),
+            dateEndYYYY: today.get("year")
+          };
+          //发送内容, 把我们的 login 这个 Object 转为 JSON 并进行发送.
+          requestForPeriod.send(JSON.stringify(periodObj));
+        }
+        //获得服务器返回的最新的 messageBoard 的信息
+
+        // console.log(theResignDate);
+        // saveToLocal("messageBoardData", messageBoardData);
+        //使用 renderMe 功能重新渲染页面.
+        // renderMe(messageBoardData);
+      }
+    });
+    requestForResign.open("post", "http://localhost:3000/reSign", true);
+    //发送的req.body 当中的格式是 JSON 格式. 服务器会有中间件把他们转为 Javascript Object
+    requestForResign.setRequestHeader("Content-Type", "application/json");
+    requestForResign.setRequestHeader("x-auth", token);
+    requestForResign.send(JSON.stringify(resignObj));
+
+    //根据服务器路由返回的结果, 把结果通过 renderMe() 渲染在页面.
+  });
+
 //Modal 中的 submit 按钮按下去的时候, 执行的操作.
 document.querySelector("#modal-submit").addEventListener("click", function(e) {
   //首先进行权限判断, 如果不符合权限则无法修改.
@@ -581,6 +899,8 @@ document.querySelector("#modal-submit").addEventListener("click", function(e) {
   }
   //如果 message 为 undefiend, 那么就是权限不够无法赋予信息, 如果权限足够则会显示为空.
   // console.log(`message is ${message}, messageField is ${messageField}`);
+
+  //通过 JQ 去隐藏 modal
   $("#exampleModal").modal("hide");
   if (message != undefined) {
     // 向服务器发出更新 messageBoard 的请求.

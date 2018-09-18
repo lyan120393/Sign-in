@@ -250,10 +250,7 @@ app.post("/signIn", authentic, (req, res) => {
         { new: true }
       )
         .then(() => {
-          res.status(200).send({
-            time: `signInTime is ${moment.unix(signInTime)} , ${signInTime}`,
-            message: `${req.user.username} signIn success, start to work now`
-          });
+          res.status(200).send({ signInTime });
         })
         .catch(e => {
           res.status(400).send({
@@ -345,12 +342,7 @@ app.post("/reSign", authentic, (req, res) => {
           { new: true }
         )
           .then(() => {
-            res.status(200).send({
-              time: `reSign signInTime is ${moment.unix(
-                resignIn
-              )} , ${resignIn}`,
-              message: "reSign success on the date above"
-            });
+            res.status(200).send(tempWorkday);
           })
           .catch(e => {
             res.status(400).send({
