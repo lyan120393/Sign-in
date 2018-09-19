@@ -398,8 +398,10 @@ app.delete("/deleteRecord", authentic, (req, res) => {
     });
     workdayPromise
       .then(index => {
-        user.deleteAndSaveTheDay(index);
-        res.status(200).send(`The day has been delete`);
+        user.deleteAndSaveTheDay(index).then(() => {
+          // user.workdays[index]
+          res.status(200).send({ deleteUnix });
+        });
       })
       .catch(e => {
         res.status(400).send(`${e}`);
@@ -462,12 +464,14 @@ app.post("/edit", authentic, (req, res) => {
   //成功 or 失败 提示.
   let user = req.user;
   let editRecordObj = _.pick(req.body, [
-    // "manualEdit", //应该是默认设置为 true
-    "_id",
-    "signIn",
+    "signInDD",
+    "signInMM",
+    "signInYYYY",
     "signInHH",
     "signInmm",
-    "signOut",
+    "signOutDD",
+    "signOutMM",
+    "signOutYYYY",
     "signOutHH",
     "signOutmm",
     "apptizer",
@@ -483,9 +487,9 @@ app.post("/edit", authentic, (req, res) => {
   if (editRecordObj.signInmm && editRecordObj.signInHH) {
     //用户改变了签入的时间
     newSignIn = toUnix({
-      MM: moment(moment.unix(editRecordObj.signIn)).format("MM"),
-      DD: moment(moment.unix(editRecordObj.signIn)).format("DD"),
-      YYYY: moment(moment.unix(editRecordObj.signIn)).format("YYYY"),
+      MM: editRecordObj.signInMM,
+      DD: editRecordObj.signInDD,
+      YYYY: editRecordObj.signInYYYY,
       HH: editRecordObj.signInHH,
       mm: editRecordObj.signInmm
     });
@@ -493,65 +497,76 @@ app.post("/edit", authentic, (req, res) => {
   if (editRecordObj.signOutmm && editRecordObj.signOutHH) {
     //用户改变了签出的时间
     newSignOut = toUnix({
-      MM: moment(moment.unix(editRecordObj.signOut)).format("MM"),
-      DD: moment(moment.unix(editRecordObj.signOut)).format("DD"),
-      YYYY: moment(moment.unix(editRecordObj.signOut)).format("YYYY"),
+      MM: editRecordObj.signOutMM,
+      DD: editRecordObj.signOutDD,
+      YYYY: editRecordObj.signOutYYYY,
       HH: editRecordObj.signOutHH,
       mm: editRecordObj.signOutmm
     });
   }
+  tempWorkday = {
+    //把手动设置过的操作, 设置 manualEdit 为 true
+    manualEdit: true,
+    signIn: newSignIn,
+    signOut: newSignOut,
+    apptizer: editRecordObj.apptizer,
+    drink: editRecordObj.drink,
+    note: editRecordObj.note,
+    hours: moment(newSignOut).diff(moment(newSignIn))
+  };
+  console.log(tempWorkday);
   //根据用户提供的新的签入时间和签出时间重新计算
-  if (newSignIn || newSignOut) {
-    if (newSignIn && newSignOut) {
-      // console.log(`both exist`);
-      tempWorkday = {
-        //把手动设置过的操作, 设置 manualEdit 为 true
-        manualEdit: true,
-        signIn: newSignIn,
-        signOut: newSignOut,
-        apptizer: editRecordObj.apptizer,
-        drink: editRecordObj.drink,
-        note: editRecordObj.note,
-        hours: moment(newSignOut).diff(moment(newSignIn))
-      };
-    } else if (!newSignIn) {
-      // console.log(`newSignIn not exist`);
-      tempWorkday = {
-        //把手动设置过的操作, 设置 manualEdit 为 true
-        manualEdit: true,
-        signIn: editRecordObj.signIn,
-        signOut: newSignOut,
-        apptizer: editRecordObj.apptizer,
-        drink: editRecordObj.drink,
-        note: editRecordObj.note,
-        hours: moment(newSignOut).diff(moment(editRecordObj.signIn))
-      };
-    } else if (!newSignOut) {
-      // console.log(`newSignOut not exist`);
-      tempWorkday = {
-        //把手动设置过的操作, 设置 manualEdit 为 true
-        manualEdit: true,
-        signIn: newSignIn,
-        signOut: editRecordObj.signOut,
-        apptizer: editRecordObj.apptizer,
-        drink: editRecordObj.drink,
-        note: editRecordObj.note,
-        hours: moment(editRecordObj.signOut).diff(moment(newSignIn))
-      };
-    }
-  } else if (!newSignIn && !newSignOut) {
-    // console.log("Both not exist");
-    tempWorkday = {
-      //把手动设置过的操作, 设置 manualEdit 为 true
-      manualEdit: true,
-      signIn: editRecordObj.signIn,
-      signOut: editRecordObj.signOut,
-      apptizer: editRecordObj.apptizer,
-      drink: editRecordObj.drink,
-      note: editRecordObj.note,
-      hours: moment(editRecordObj.signOut).diff(moment(editRecordObj.signIn))
-    };
-  }
+  // if (newSignIn || newSignOut) {
+  //   if (newSignIn && newSignOut) {
+  //     // console.log(`both exist`);
+  //     tempWorkday = {
+  //       //把手动设置过的操作, 设置 manualEdit 为 true
+  //       manualEdit: true,
+  //       signIn: newSignIn,
+  //       signOut: newSignOut,
+  //       apptizer: editRecordObj.apptizer,
+  //       drink: editRecordObj.drink,
+  //       note: editRecordObj.note,
+  //       hours: moment(newSignOut).diff(moment(newSignIn))
+  //     };
+  //   } else if (!newSignIn) {
+  //     // console.log(`newSignIn not exist`);
+  //     tempWorkday = {
+  //       //把手动设置过的操作, 设置 manualEdit 为 true
+  //       manualEdit: true,
+  //       signIn: editRecordObj.signIn,
+  //       signOut: newSignOut,
+  //       apptizer: editRecordObj.apptizer,
+  //       drink: editRecordObj.drink,
+  //       note: editRecordObj.note,
+  //       hours: moment(newSignOut).diff(moment(editRecordObj.signIn))
+  //     };
+  //   } else if (!newSignOut) {
+  //     // console.log(`newSignOut not exist`);
+  //     tempWorkday = {
+  //       //把手动设置过的操作, 设置 manualEdit 为 true
+  //       manualEdit: true,
+  //       signIn: newSignIn,
+  //       signOut: editRecordObj.signOut,
+  //       apptizer: editRecordObj.apptizer,
+  //       drink: editRecordObj.drink,
+  //       note: editRecordObj.note,
+  //       hours: moment(editRecordObj.signOut).diff(moment(newSignIn))
+  //     };
+  //   }
+  // } else if (!newSignIn && !newSignOut) {
+  //   // console.log("Both not exist");
+  //   tempWorkday = {
+  //     //把手动设置过的操作, 设置 manualEdit 为 true
+  //     manualEdit: true,
+  //     signIn: editRecordObj.signIn,
+  //     signOut: editRecordObj.signOut,
+  //     apptizer: editRecordObj.apptizer,
+  //     drink: editRecordObj.drink,
+  //     note: editRecordObj.note,
+  //     hours: moment(editRecordObj.signOut).diff(moment(editRecordObj.signIn))
+  //   };
+  // }
   // console.log(tempWorkday);
 
   let workdayPromise = new Promise((resolve, reject) => {
@@ -580,23 +595,22 @@ app.post("/edit", authentic, (req, res) => {
   workdayPromise
     .then(index => {
       //删除这一天的数据
-      user.deleteAndSaveTheDay(index);
+      user.deleteAndSaveTheDay(index).then(() => {
+        People.update(
+          { _id: user._id },
+          { $push: { workdays: tempWorkday } },
+          { new: true }
+        )
+          .then(() => {
+            res.status(200).send(tempWorkday);
+          })
+          .catch(e => {
+            res.status(400).send({
+              message: `Cannot signIn ${e}`
+            });
+          });
+      });
       //查找根据用户的id, 然后在 workdays 数组中的末尾增加一天
-      People.update(
-        { _id: user._id },
-        { $push: { workdays: tempWorkday } },
-        { new: true }
-      )
-        .then(() => {
-          res.status(200).send({
-            tempWorkday
-          });
-        })
-        .catch(e => {
-          res.status(400).send({
-            message: `Cannot signIn ${e}`
-          });
-        });
     })
     .catch(e => {
       res.status(400).send(e);

@@ -153,24 +153,19 @@ PeopleSchema.methods = {
   },
   deleteAndSaveTheDay(theDayIndex) {
     let user = this;
-    //根据 user 和 theday 的 ID 找到那一天在 workdays 数组当中的index,
-
-    // let findtheIndex = function(user, theday) {
-    //   let tempArray = user.workdays.filter(
-    //     workday => String(workday._id) === String(theday._id)
-    //   );
-    //   return user.workdays.indexOf(tempArray[0]);
-    // };
-    //通过 spice 方法 移除之前的 index, 并插入新的 theday 在相同位置
-    user.workdays.splice(theDayIndex, 1);
-    //通过 update operator 把修改好的 user 实例进行 update.
-    People.update(
-      { _id: user._id },
-      { $set: { workdays: user.workdays } },
-      { new: true }
-    ).then(doc => {
-      //成功之后的对数据库的操作记录
-      console.log(doc);
+    return new Promise((resolve, reject) => {
+      //根据 user 和 theday 的 ID 找到那一天在 workdays 数组当中的index,
+      //通过 spice 方法 移除之前的 index, 并插入新的 theday 在相同位置
+      user.workdays.splice(theDayIndex, 1);
+      //通过 update operator 把修改好的 user 实例进行 update.
+      People.update(
+        { _id: user._id },
+        { $set: { workdays: user.workdays } },
+        { new: true }
+      ).then(doc => {
+        //成功之后的对数据库的操作记录
+        resolve(doc);
+      });
     });
   }
 };

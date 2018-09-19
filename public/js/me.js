@@ -19,7 +19,7 @@ let setClockInMessage = function(periodData) {
       moment().format("MM-DD-YYYY")
     );
   });
-  console.log(todayRecord);
+  // console.log(todayRecord);
   //如果今天存在记录, 则进行渲染给 clock In 的 message 区域.
   if (todayRecord[0]) {
     if (todayRecord[0].signIn && !todayRecord[0].signOut) {
@@ -54,6 +54,7 @@ let renderPeriod = periodData => {
   periodData.sort(function(a, b) {
     return a.signIn - b.signIn;
   });
+  console.log(periodData);
 
   //检查是否存在今天的记录, 如果存在则进行设置 clock in 的 message 区域.
   setClockInMessage(periodData);
@@ -82,7 +83,133 @@ let renderPeriod = periodData => {
     let tabletdDrinks = document.createElement("td");
     let tabletdApptizers = document.createElement("td");
     let tabletdNotes = document.createElement("td");
+    let tabletdEdit = document.createElement("td");
+    let tabletdDelete = document.createElement("td");
+    //创建日期表格上面的 edit 和 delete 的按钮.
+    let tableEditButton = document.createElement("button");
+    let tableDeleteButton = document.createElement("button");
+    //给按钮设置属性
+    tableEditButton.setAttribute("class", "btn");
+    tableEditButton.setAttribute("class", "btn-warning");
+    tableEditButton.setAttribute("type", "button");
+    tableEditButton.textContent = "Edit";
+    //点击按钮之后, 弹出的 modal 的连接
+    tableEditButton.setAttribute("data-toggle", "modal");
+    tableEditButton.setAttribute("data-target", "#editModal");
 
+    tableDeleteButton.setAttribute("class", "btn");
+    tableDeleteButton.setAttribute("class", "btn-danger");
+    tableDeleteButton.setAttribute("type", "button");
+    tableDeleteButton.textContent = "Delete";
+    //给按钮设置行为
+    tableEditButton.addEventListener("click", function(e) {
+      //点击 edit 按钮之后, 把所有的数据内容都赋值给 modal .
+      document.querySelector("#editModal-month").value = moment
+        .unix(element.signIn)
+        .format("MM");
+      document.querySelector("#editModal-day").value = moment
+        .unix(element.signIn)
+        .format("DD");
+      document.querySelector("#editModal-year").value = moment
+        .unix(element.signIn)
+        .format("YYYY");
+      document.querySelector("#editModal-InHH").value = moment
+        .unix(element.signIn)
+        .format("HH");
+      document.querySelector("#editModal-Inmm").value = moment
+        .unix(element.signIn)
+        .format("mm");
+      document.querySelector("#editModal-OutHH").value = moment
+        .unix(element.signOut)
+        .format("HH");
+      document.querySelector("#editModal-Outmm").value = moment
+        .unix(element.signOut)
+        .format("mm");
+      document.querySelector("#editModal-apptizer").value = element.apptizer;
+      document.querySelector("#editModal-drink").value = element.drink;
+      document.querySelector("#editModal-notes").value = element.note;
+      // console.log(moment.unix(element.signIn).format("MMM D"));
+    });
+    tableDeleteButton.addEventListener("click", function(e) {
+      let deleteObj = {};
+      deleteObj.dateMM = moment.unix(element.signIn).format("MM");
+      deleteObj.dateDD = moment.unix(element.signIn).format("DD");
+      deleteObj.dateYYYY = moment.unix(element.signIn).format("YYYY");
+
+      const requestForDelete = new XMLHttpRequest();
+      requestForDelete.addEventListener("readystatechange", function(e) {
+        if (e.target.readyState === 4) {
+          console.log(e.target.responseText);
+          const theDeleteDate = JSON.parse(e.target.responseText);
+          //如果成功的拿到了这一天的数据, 我们可以如下操作.
+          //获取今天的日期通过 moment.js, 并且推算出前一周的日期
+          let today = moment();
+          let theDayBeforeToday7 = moment().subtract(7, "days");
+          //进行判断, 如果这一天的数据和今天的日期之间相差在7天以内, 我们需要给 period 路由发送请求, 获取最新的 perioddata
+          //如果这一天的数据, 和今天的日期相差超过了7天, 就不需要在获得最新的 perioddata 内容.
+          let todayFormat = today.format("YYYY-MM-DD");
+          let theDayBeforeToday7Format = theDayBeforeToday7.format(
+            "YYYY-MM-DD"
+          );
+          let theDay = moment
+            .unix(theDeleteDate.deleteUnix)
+            .format("YYYY-MM-DD");
+          console.log(todayFormat, theDayBeforeToday7Format, theDay);
+          if (
+            moment(theDay).isBetween(
+              theDayBeforeToday7Format,
+              todayFormat,
+              null,
+              []
+            )
+          ) {
+            //     //这一天是距离今天七天以内的日期
+            console.log(`between 7 days`);
+            const requestForPeriod = new XMLHttpRequest();
+            requestForPeriod.addEventListener("readystatechange", function(e) {
+              if (e.target.readyState === 4) {
+                const periodData = JSON.parse(e.target.responseText);
+                // console.log(periodData);
+                saveToLocal("periodData", periodData);
+                //这里需要的是如何根据返回的数据去进行渲染页面
+                let timeTable = document.querySelector("#table-body");
+                while (timeTable.firstChild) {
+                  timeTable.removeChild(timeTable.firstChild);
+                }
+                renderMe(periodData);
+              }
+            });
+            requestForPeriod.open("post", "http://localhost:3000/period", true);
+            //发送的req.body 当中的格式是 JSON 格式. 服务器会有中间件把他们转为 Javascript Object
+            requestForPeriod.setRequestHeader(
+              "Content-Type",
+              "application/json"
+            );
+            requestForPeriod.setRequestHeader("x-auth", token);
+            let periodObj = {
+              dateStartMM: theDayBeforeToday7.get("month") + 1,
+              dateStartDD: theDayBeforeToday7.get("date"),
+              dateStartYYYY: theDayBeforeToday7.get("year"),
+              dateEndMM: today.get("month") + 1,
+              dateEndDD: today.get("date"),
+              dateEndYYYY: today.get("year")
+            };
+            // console.log(`periodObj is ${JSON.stringify(periodObj)}`);
+            //发送内容, 把我们的 login 这个 Object 转为 JSON 并进行发送.
+            requestForPeriod.send(JSON.stringify(periodObj));
+          }
+        }
+      });
+      requestForDelete.open(
+        "delete",
+        "http://localhost:3000/deleteRecord",
+        true
+      );
+      requestForDelete.setRequestHeader("Content-Type", "application/json");
+      requestForDelete.setRequestHeader("x-auth", token);
+      console.log(JSON.stringify(deleteObj));
+      requestForDelete.send(JSON.stringify(deleteObj));
+    });
     //为 tr 的子元素添加内容和属性
     //需要根据回传的数据进行设置内容. 需要允许内容为空是渲染一行空, 但是 week 需要有内容显示周几或者几号.
     tablethWeek.textContent = moment.unix(element.signIn).format("ddd");
@@ -121,7 +248,9 @@ let renderPeriod = periodData => {
     } else {
       tabletdNotes.innerHTML = element.note;
     }
-
+    //给 edit 和 delete button 添加事件
+    tabletdEdit.appendChild(tableEditButton);
+    tabletdDelete.appendChild(tableDeleteButton);
     //添加 tr 的子元素给与 tr
     tabletr.appendChild(tablethWeek);
     tabletr.appendChild(tabletdDate);
@@ -132,6 +261,8 @@ let renderPeriod = periodData => {
     tabletr.appendChild(tabletdDrinks);
     tabletr.appendChild(tabletdApptizers);
     tabletr.appendChild(tabletdNotes);
+    tabletr.appendChild(tabletdEdit);
+    tabletr.appendChild(tabletdDelete);
 
     //将 tr 添加到table 当中进行显示出来
     document.querySelector("#table-body").appendChild(tabletr);
@@ -577,13 +708,13 @@ document
     ).value;
     signOutObj.drink = document.querySelector("#SignOutModal-drink").value;
     signOutObj.note = document.querySelector("#SignOutModal-notes").value;
-    console.log(signOutObj);
+    // console.log(signOutObj);
 
     const requestForSignOut = new XMLHttpRequest();
     requestForSignOut.addEventListener("readystatechange", function(e) {
       if (e.target.readyState === 4) {
         $("#signOutModal").modal("hide");
-        console.log(e.target.responseText);
+        // console.log(e.target.responseText);
         let signInRecord = JSON.parse(e.target.responseText);
         setClockInMessagePassedByMoment(signInRecord.signInTime);
       }
@@ -603,13 +734,13 @@ document
     ).value;
     signOutObj.drink = document.querySelector("#SignOutModal-drink").value;
     signOutObj.note = document.querySelector("#SignOutModal-notes").value;
-    console.log(signOutObj);
+    // console.log(signOutObj);
 
     const requestForSignOut = new XMLHttpRequest();
     requestForSignOut.addEventListener("readystatechange", function(e) {
       if (e.target.readyState === 4) {
         $("#signOutModal").modal("hide");
-        console.log(e.target.responseText);
+        // console.log(e.target.responseText);
         let signInRecord = JSON.parse(e.target.responseText);
         setClockInMessagePassedByMoment(signInRecord.signInTime);
       }
@@ -629,13 +760,13 @@ document
     ).value;
     signOutObj.drink = document.querySelector("#SignOutModal-drink").value;
     signOutObj.note = document.querySelector("#SignOutModal-notes").value;
-    console.log(signOutObj);
+    // console.log(signOutObj);
 
     const requestForSignOut = new XMLHttpRequest();
     requestForSignOut.addEventListener("readystatechange", function(e) {
       if (e.target.readyState === 4) {
         $("#signOutModal").modal("hide");
-        console.log(e.target.responseText);
+        // console.log(e.target.responseText);
         let signInRecord = JSON.parse(e.target.responseText);
         setClockInMessagePassedByMoment(signInRecord.signInTime);
       }
@@ -663,7 +794,7 @@ window.onload = function() {
   requestForUserInfo.addEventListener("readystatechange", function(e) {
     if (e.target.readyState === 4) {
       const userInfoData = JSON.parse(e.target.responseText);
-      console.log(JSON.stringify(userInfoData));
+      // console.log(JSON.stringify(userInfoData));
       //本地需要安装 moment.js, 在进行加载的时候, 把需要的时间字段上传给服务器.
       //拿到数据之后, 把数据存储在本地的 localStorage 当中, 键名就是这个数据的变量名称.
       //查看是否可以在拿到数据之后, 立刻把数据发送给/ me, 这样/me 就会拿到这些数据去渲染模板页面,然后返回给本地.
@@ -693,7 +824,7 @@ window.onload = function() {
   requestForPeriod.addEventListener("readystatechange", function(e) {
     if (e.target.readyState === 4) {
       const periodData = JSON.parse(e.target.responseText);
-      console.log(periodData);
+      // console.log(periodData);
       //这里需要的是如何根据返回的数据去进行渲染页面
       saveToLocal("periodData", periodData);
       renderMe(periodData);
@@ -722,7 +853,7 @@ window.onload = function() {
   requestForMessageBoard.addEventListener("readystatechange", function(e) {
     if (e.target.readyState === 4) {
       const messageBoardData = JSON.parse(e.target.responseText);
-      console.log(messageBoardData);
+      // console.log(messageBoardData);
       //这里需要的是如何根据返回的数据去进行渲染页面
       saveToLocal("messageBoardData", messageBoardData);
       renderMe(messageBoardData);
@@ -785,7 +916,7 @@ document
     resignObj.note = document.querySelector("#reSignInModal-notes").value;
 
     //并把数据 set 为一个 obj, 这个是一个应对 resign 路由.
-    console.log(resignObj);
+    // console.log(resignObj);
 
     //验证数据是否合法, 如果合法
     //检查确保数据的类型都是对的.
@@ -821,7 +952,7 @@ document
           requestForPeriod.addEventListener("readystatechange", function(e) {
             if (e.target.readyState === 4) {
               const periodData = JSON.parse(e.target.responseText);
-              console.log(periodData);
+              // console.log(periodData);
               saveToLocal("periodData", periodData);
               //这里需要的是如何根据返回的数据去进行渲染页面
               let timeTable = document.querySelector("#table-body");
@@ -864,6 +995,99 @@ document
     requestForResign.send(JSON.stringify(resignObj));
 
     //根据服务器路由返回的结果, 把结果通过 renderMe() 渲染在页面.
+  });
+
+document
+  .querySelector("#editModal-submit")
+  .addEventListener("click", function(e) {
+    e.preventDefault();
+
+    //获取该modal上面全部相关的数据
+    let editObj = {};
+    //the data
+    editObj.signInDD = document.querySelector("#editModal-day").value;
+    editObj.signInMM = document.querySelector("#editModal-month").value;
+    editObj.signInYYYY = document.querySelector("#editModal-year").value;
+    editObj.signOutDD = document.querySelector("#editModal-day").value;
+    editObj.signOutMM = document.querySelector("#editModal-month").value;
+    editObj.signOutYYYY = document.querySelector("#editModal-year").value;
+    //In time
+    editObj.signInHH = document.querySelector("#editModal-InHH").value;
+    editObj.signInmm = document.querySelector("#editModal-Inmm").value;
+    //Out time
+    editObj.signOutHH = document.querySelector("#editModal-OutHH").value;
+    editObj.signOutmm = document.querySelector("#editModal-Outmm").value;
+    //others
+    editObj.apptizer = document.querySelector("#editModal-apptizer").value;
+    editObj.drink = document.querySelector("#editModal-drink").value;
+    editObj.note = document.querySelector("#editModal-notes").value;
+
+    console.log(editObj);
+
+    //隐藏 modal 模块
+    $("#editModal").modal("hide");
+
+    const requestForEdit = new XMLHttpRequest();
+    requestForEdit.addEventListener("readystatechange", function(e) {
+      if (e.target.readyState === 4) {
+        const theEditDate = JSON.parse(e.target.responseText);
+        //如果成功的拿到了这一天的数据, 我们可以如下操作.
+        //获取今天的日期通过 moment.js, 并且推算出前一周的日期
+        let today = moment();
+        let theDayBeforeToday7 = moment().subtract(7, "days");
+        //进行判断, 如果这一天的数据和今天的日期之间相差在7天以内, 我们需要给 period 路由发送请求, 获取最新的 perioddata
+        //如果这一天的数据, 和今天的日期相差超过了7天, 就不需要在获得最新的 perioddata 内容.
+        let todayFormat = today.format("YYYY-MM-DD");
+        let theDayBeforeToday7Format = theDayBeforeToday7.format("YYYY-MM-DD");
+        let theDay = moment.unix(theEditDate.signIn).format("YYYY-MM-DD");
+        console.log(todayFormat, theDayBeforeToday7Format, theDay);
+        if (
+          moment(theDay).isBetween(
+            theDayBeforeToday7Format,
+            todayFormat,
+            null,
+            []
+          )
+        ) {
+          //     //这一天是距离今天七天以内的日期
+          console.log(`between 7 days`);
+          const requestForPeriod = new XMLHttpRequest();
+          requestForPeriod.addEventListener("readystatechange", function(e) {
+            if (e.target.readyState === 4) {
+              const periodData = JSON.parse(e.target.responseText);
+              // console.log(periodData);
+              saveToLocal("periodData", periodData);
+              //这里需要的是如何根据返回的数据去进行渲染页面
+              let timeTable = document.querySelector("#table-body");
+              while (timeTable.firstChild) {
+                timeTable.removeChild(timeTable.firstChild);
+              }
+              renderMe(periodData);
+            }
+          });
+          requestForPeriod.open("post", "http://localhost:3000/period", true);
+          //发送的req.body 当中的格式是 JSON 格式. 服务器会有中间件把他们转为 Javascript Object
+          requestForPeriod.setRequestHeader("Content-Type", "application/json");
+          requestForPeriod.setRequestHeader("x-auth", token);
+          let periodObj = {
+            dateStartMM: theDayBeforeToday7.get("month") + 1,
+            dateStartDD: theDayBeforeToday7.get("date"),
+            dateStartYYYY: theDayBeforeToday7.get("year"),
+            dateEndMM: today.get("month") + 1,
+            dateEndDD: today.get("date"),
+            dateEndYYYY: today.get("year")
+          };
+          // console.log(`periodObj is ${JSON.stringify(periodObj)}`);
+          //发送内容, 把我们的 login 这个 Object 转为 JSON 并进行发送.
+          requestForPeriod.send(JSON.stringify(periodObj));
+        }
+      }
+    });
+    requestForEdit.open("post", "http://localhost:3000/edit", true);
+    //发送的req.body 当中的格式是 JSON 格式. 服务器会有中间件把他们转为 Javascript Object
+    requestForEdit.setRequestHeader("Content-Type", "application/json");
+    requestForEdit.setRequestHeader("x-auth", token);
+    requestForEdit.send(JSON.stringify(editObj));
   });
 
 //Modal 中的 submit 按钮按下去的时候, 执行的操作.
@@ -915,7 +1139,7 @@ document.querySelector("#modal-submit").addEventListener("click", function(e) {
       if (e.target.readyState === 4) {
         //获得服务器返回的最新的 messageBoard 的信息
         const messageBoardData = JSON.parse(e.target.responseText);
-        console.log(messageBoardData);
+        // console.log(messageBoardData);
         saveToLocal("messageBoardData", messageBoardData);
         //使用 renderMe 功能重新渲染页面.
         renderMe(messageBoardData);
