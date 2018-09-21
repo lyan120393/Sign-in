@@ -3,7 +3,7 @@ html
   link(rel="stylesheet" type="text/css" href="/css/login.css")
   body
   nav.navbar.navbar-expand-lg.light.bg-light.fixed-top
-    a.navbar-brand(href="localhost:3000/login") POPO
+    a.navbar-brand#nav-logo.text-primary POPO
     .ml-auto
       span.align-baseline#username 
   section#login-form-section
@@ -43,18 +43,13 @@ html
             .row.pt-2
               .col
                 p.mt-3#todayRecord 
-            //- .row.text-center
-            //-   .col-6
-            //-     button.btn.btn-outline-Info.btn-sm#editRecord-btn(type="button") Edit Record
-            //-   .col-6
-            //-     button.btn.btn-outline-dark.btn-sm#deleteRecord-btn(type="button") Delete Record
       .form-group.border-bottom
           .row
             .col-8
               p#showPeriodTime 
             .col-4.text-right
               button.btn.btn-outline-Info.btn-sm#statistic-btn.mb-3(type="button") More Date
-          .div.table-responsive
+          .table-responsive
             table.table.table-striped.table-bordered.text-center
               thread
                 tr
@@ -132,13 +127,21 @@ html
               span(aria-hidden="true") x
           .modal-body
             .container-fluid
-              .row#signOutModal-SignOutOthers
-                .col
-                  input.form-control#SignOutModal-apptizer(type="text" placeholder="apptizer")
-                .col
-                  input.form-control#SignOutModal-drink(type="text" placeholder="drink")
-                .col
-                  input.form-control#SignOutModal-notes(type="text" placeholder="notes")
+              #signOutModal-SignOutOthers
+                .row
+                  .col
+                    .input-group-prepend
+                      span.input-group-text month:
+                      input.form-control#SignOutModal-apptizer(type="text" placeholder="apptizer")
+                  .col
+                    .input-group-prepend
+                      span.input-group-text drink:
+                      input.form-control#SignOutModal-drink(type="text" placeholder="drink")
+                .row.mt-2
+                  .col
+                    .input-group-prepend
+                      span.input-group-text note:
+                      input.form-control#SignOutModal-notes(type="text" placeholder="notes")
               .pt-3
               .row#signOutModal-SignOutAvaTime
                 .col-4.text-center
@@ -169,8 +172,6 @@ html
                   .col.text-nowrap.h5 You need SignIn before SignOut
           .modal-footer
             button(type="button" class="btn btn-secondary" data-dismiss="modal") Close
-
-
     div#reSignInModal(class="modal fade" tabindex="-1" role="dialog" aria-labelledby="reSignInModalLabel" aria-hidden="true")
       .modal-dialog.modal-dialog-centered(role="document")
         .modal-content
@@ -180,37 +181,59 @@ html
               span(aria-hidden="true") x
           .modal-body
             .container-fluid
-              lable.col-form-label the date
+              lable.col-form-label The date
                 .row
                   .col
-                    input.form-control#reSignInModal-month(type="text" placeholder="month")
+                    .input-group-prepend
+                      span.input-group-text month:
+                      input.form-control#reSignInModal-month(type="text" placeholder="month")
                   .col
-                    input.form-control#reSignInModal-day(type="text" placeholder="day")
+                    .input-group-prepend
+                      span.input-group-text day:
+                      input.form-control#reSignInModal-day(type="text" placeholder="day")
+                .row.pt-2
                   .col
-                    input.form-control#reSignInModal-year(type="text" placeholder="year")
+                    .input-group-prepend
+                      span.input-group-text year:
+                      input.form-control#reSignInModal-year(type="text" placeholder="year")
               .py-2
               lable.col-form-label Sign In Time
                 .row
                   .col
-                    input.form-control#reSignInModal-InHH(type="text" placeholder="HH")
+                    .input-group-prepend
+                      span.input-group-text HH:
+                      input.form-control#reSignInModal-InHH(type="text" placeholder="HH")
                   .col
-                    input.form-control#reSignInModal-Inmm(type="text" placeholder="mm")
+                    .input-group-prepend
+                      span.input-group-text mm:
+                      input.form-control#reSignInModal-Inmm(type="text" placeholder="mm")
               .py-2        
               lable.col-form-label Sign Out Time
                 .row
                   .col
-                    input.form-control#reSignInModal-OutHH(type="text" placeholder="HH")
+                    .input-group-prepend
+                      span.input-group-text HH:
+                      input.form-control#reSignInModal-OutHH(type="text" placeholder="HH")
                   .col
-                    input.form-control#reSignInModal-Outmm(type="text" placeholder="mm")
+                    .input-group-prepend
+                      span.input-group-text mm:
+                      input.form-control#reSignInModal-Outmm(type="text" placeholder="mm")
               .py-2
               lable.col-form-label Others
                 .row
                   .col
-                    input.form-control#reSignInModal-apptizer(type="text" placeholder="apptizer")
+                    .input-group-prepend
+                      span.input-group-text apptizer:
+                      input.form-control#reSignInModal-apptizer(type="text" placeholder="apptizer")
                   .col
-                    input.form-control#reSignInModal-drink(type="text" placeholder="drink")
+                    .input-group-prepend
+                      span.input-group-text drink:
+                      input.form-control#reSignInModal-drink(type="text" placeholder="drink")
+                .row.pt-2
                   .col
-                    input.form-control#reSignInModal-notes(type="text" placeholder="notes")
+                    .input-group-prepend
+                      span.input-group-text note:
+                      input.form-control#reSignInModal-notes(type="text" placeholder="note")
           .modal-footer
             button(type="button" class="btn btn-secondary" data-dismiss="modal") Close
             button#reSignInModal-submit(type="button" class="btn btn-primary") Submit
@@ -224,37 +247,59 @@ html
                   span(aria-hidden="true") x
               .modal-body
                 .container-fluid
-                  lable.col-form-label the date
+                  lable.col-form-label The date
                     .row
                       .col
-                        input.form-control#editModal-month(type="text" placeholder="month" disabled)
+                        .input-group-prepend
+                          span.input-group-text month:
+                          input.form-control#editModal-month(type="text" placeholder="month" disabled)
                       .col
-                        input.form-control#editModal-day(type="text" placeholder="day" disabled)
+                        .input-group-prepend
+                          span.input-group-text day:
+                          input.form-control#editModal-day(type="text" placeholder="day" disabled)
+                    .row.pt-2
                       .col
-                        input.form-control#editModal-year(type="text" placeholder="year" disabled)
+                        .input-group-prepend
+                          span.input-group-text year:
+                          input.form-control#editModal-year(type="text" placeholder="year" disabled)
                   .py-2
                   lable.col-form-label Sign In Time
                     .row
                       .col
-                        input.form-control#editModal-InHH(type="text" placeholder="HH")
+                        .input-group-prepend
+                          span.input-group-text HH:
+                          input.form-control#editModal-InHH(type="text" placeholder="HH")
                       .col
-                        input.form-control#editModal-Inmm(type="text" placeholder="mm")
+                        .input-group-prepend
+                          span.input-group-text mm:
+                          input.form-control#editModal-Inmm(type="text" placeholder="mm")
                   .py-2        
                   lable.col-form-label Sign Out Time
                     .row
                       .col
-                        input.form-control#editModal-OutHH(type="text" placeholder="HH")
+                        .input-group-prepend
+                          span.input-group-text HH:
+                          input.form-control#editModal-OutHH(type="text" placeholder="HH")
                       .col
-                        input.form-control#editModal-Outmm(type="text" placeholder="mm")
+                        .input-group-prepend
+                          span.input-group-text mm:
+                          input.form-control#editModal-Outmm(type="text" placeholder="mm")
                   .py-2
                   lable.col-form-label Others
                     .row
                       .col
-                        input.form-control#editModal-apptizer(type="text" placeholder="apptizer")
+                        .input-group-prepend
+                          span.input-group-text apptizer:
+                          input.form-control#editModal-apptizer(type="text" placeholder="apptizer")
                       .col
-                        input.form-control#editModal-drink(type="text" placeholder="drink")
+                        .input-group-prepend
+                          span.input-group-text drink:
+                          input.form-control#editModal-drink(type="text" placeholder="drink")
+                    .row.pt-2
                       .col
-                        input.form-control#editModal-notes(type="text" placeholder="notes")
+                        .input-group-prepend
+                          span.input-group-text note:
+                          input.form-control#editModal-notes(type="text" placeholder="notes")
               .modal-footer
                 button(type="button" class="btn btn-secondary" data-dismiss="modal") Close
                 button#editModal-submit(type="button" class="btn btn-primary") Submit

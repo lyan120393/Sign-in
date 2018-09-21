@@ -1,5 +1,10 @@
 console.log("login.js has connected");
 let loginObj = {};
+// `${serverAddress}/xxx`
+const serverAddress = "http://localhost:3000";
+document.querySelector("#nav-logo").addEventListener("click", function(e) {
+  location.assign(`${serverAddress}/login`);
+});
 document.querySelector("#login-form").addEventListener("change", function(e) {
   if (e.target.id === "exampleInputEmail") {
     e.preventDefault();
@@ -14,20 +19,6 @@ document.querySelector("#login-form").addEventListener("change", function(e) {
 document.querySelector("#register-btn").addEventListener("click", function(e) {
   location.assign("/reg");
 });
-
-// let visitme = function(token) {
-//   const requestToMe = new XMLHttpRequest();
-//   requestToMe.addEventListener("readystatechange", function(e) {
-//     if (e.target.readyState === 4) {
-//       location.assign(`/me#${token}`);
-//     }
-//   });
-//   requestToMe.open("get", "http://localhost:3000/me", true);
-//   requestToMe.setRequestHeader("Content-Type", "application/json");
-//   requestToMe.setRequestHeader("x-auth", token);
-//   requestToMe.send();
-// };
-
 //使用 XMLHttpRequest 请求的案例:
 //点击登录按钮之后的操作
 document.querySelector("#login-form").addEventListener("submit", function(e) {
@@ -58,7 +49,16 @@ document.querySelector("#login-form").addEventListener("submit", function(e) {
           }
         } else if (data.message) {
           //账号或者密码错误
-          console.log(`data.message is ${data.message}`);
+          //清除原有页面数据, 并进行重新渲染
+          let showCorW = document.querySelector("#showCorW");
+          while (showCorW.firstChild) {
+            showCorW.removeChild(showCorW.firstChild);
+          }
+          let InvalidNotice = document.createElement("lable");
+          InvalidNotice.textContent = `Cannot login, because ${data.message}`;
+          InvalidNotice.setAttribute("class", "text-danger");
+          showCorW.appendChild(InvalidNotice);
+          // console.log(`data.message is ${data.message}`);
         }
       } else {
         //返回的数据为空时
@@ -68,14 +68,22 @@ document.querySelector("#login-form").addEventListener("submit", function(e) {
   });
   if (loginObj.email && loginObj.password) {
     //发送 async 的 post 请求,并指定路由.
-    console.log(`request sent`);
-    request.open("post", "http://localhost:3000/user/login", true);
+    // console.log(`request sent`);
+    request.open("post", `${serverAddress}/user/login`, true);
     //发送的req.body 当中的格式是 JSON 格式. 服务器会有中间件把他们转为 Javascript Object
     request.setRequestHeader("Content-Type", "application/json");
     //发送内容, 把我们的 login 这个 Object 转为 JSON 并进行发送.
     request.send(JSON.stringify(loginObj));
   } else {
-    console.log(`please input email & password`);
+    // console.log(`please input email & password`);
+    let showCorW = document.querySelector("#showCorW");
+    while (showCorW.firstChild) {
+      showCorW.removeChild(showCorW.firstChild);
+    }
+    let InvalidNotice = document.createElement("lable");
+    InvalidNotice.textContent = `please input email & password`;
+    InvalidNotice.setAttribute("class", "text-danger");
+    showCorW.appendChild(InvalidNotice);
   }
   e.target.elements[0].value = "";
   e.target.elements[1].value = "";

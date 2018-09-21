@@ -1,5 +1,9 @@
 console.log(`reg.js has connected`);
+const serverAddress = "http://localhost:3000";
 let registerObj = {};
+document.querySelector("#nav-logo").addEventListener("click", function(e) {
+  location.assign(`${serverAddress}/login`);
+});
 document
   .querySelector("#register-form")
   .addEventListener("change", function(e) {
@@ -25,15 +29,58 @@ document.querySelector("#abandon-btn").addEventListener("click", function(e) {
   location.assign("/login");
 });
 
+let registerValidator = function(
+  email,
+  username,
+  passwordFirst,
+  passwordSecond
+) {
+  let passwordBoolean = false;
+  let emailBoolean = false;
+  let userBoolean = false;
+  if (email && email != "") {
+    emailBoolean = true;
+  } else {
+    return "email is not a valid email";
+  }
+
+  if (username && username != "") {
+    userBoolean = true;
+  } else {
+    return "username is not work";
+  }
+
+  if (
+    `${passwordFirst}`.length >= 6 &&
+    `${passwordFirst}`.length <= 64 &&
+    `${passwordFirst}`
+  ) {
+    if (passwordFirst === passwordSecond) {
+      passwordBoolean = true;
+    } else {
+      return "Password and Confirm Password are not same";
+    }
+  } else {
+    return "password's length has to be between 6 to 64.";
+  }
+  if (passwordBoolean && emailBoolean && userBoolean) {
+    return true;
+  }
+};
+
 document
   .querySelector("#register-form")
   .addEventListener("submit", function(e) {
     e.preventDefault();
+    let result = registerValidator(
+      registerObj.email,
+      registerObj.username,
+      registerObj.passwordFirst,
+      registerObj.passwordSecond
+    );
     if (
-      registerObj.passwordFirst === registerObj.passwordSecond &&
-      registerObj.passwordSecond != undefined &&
-      registerObj.email != undefined &&
-      registerObj.username != undefined
+      //需要一个判定的功能,
+      result === true
     ) {
       // console.log(registerObj);
       registerObj.password = registerObj.passwordFirst;
@@ -61,14 +108,21 @@ document
         }
       });
       //发送 async 的 post 请求,并指定路由.
-      request.open("post", "http://localhost:3000/reg", true);
+      request.open("post", `${serverAddress}/reg`, true);
       //发送的req.body 当中的格式是 JSON 格式. 服务器会有中间件把他们转为 Javascript Object
       request.setRequestHeader("Content-Type", "application/json");
       //发送内容, 把我们的 login 这个 Object 转为 JSON 并进行发送.
       // console.log(registerObj);
       request.send(JSON.stringify(registerObj));
     } else {
-      console.log(`password is not same`);
+      let showCorW = document.querySelector("#showCorW");
+      while (showCorW.firstChild) {
+        showCorW.removeChild(showCorW.firstChild);
+      }
+      let InvalidNotice = document.createElement("lable");
+      InvalidNotice.textContent = `Cannot complete register, because ${result}`;
+      InvalidNotice.setAttribute("class", "text-danger");
+      showCorW.appendChild(InvalidNotice);
     }
     e.target.elements[0].value = "";
     e.target.elements[1].value = "";

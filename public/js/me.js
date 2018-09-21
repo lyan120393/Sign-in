@@ -1,6 +1,8 @@
 console.log(`me.js has connected`);
 //hash使用 substring(1)减去前面的#符号.
 const token = location.hash.substring(1);
+// `${serverAddress}`
+const serverAddress = "http://localhost:3000";
 // console.log(token);
 //拿到 token 之后, 在页面进行加载的时候, 就会去访问服务器的/user/me 的路由去获得需要的一切信息.
 
@@ -48,6 +50,17 @@ let setClockInMessagePassedByMoment = function(unixtime) {
   }
 };
 
+//设置时间段, 一般是一个星期的显示
+let showPeriodTime = () => {
+  let today = moment();
+  let theDayBeforeToday7 = moment().subtract(7, "days");
+  document.querySelector(
+    "#showPeriodTime"
+  ).textContent = `From ${theDayBeforeToday7.format("MMM D")} to ${today.format(
+    "MMM D"
+  )}`;
+};
+
 let renderPeriod = periodData => {
   //首先拿到数组, 然后遍历数组的每一个元素, 可以得知每一个工作日的信息.并进行渲染.
   //对数组进行重新排序. 根据他们的返回日期.
@@ -59,17 +72,7 @@ let renderPeriod = periodData => {
   //检查是否存在今天的记录, 如果存在则进行设置 clock in 的 message 区域.
   setClockInMessage(periodData);
 
-  //设置时间段, 一般是一个星期的显示
-  let showPeriodTime = () => {
-    let today = moment();
-    let theDayBeforeToday7 = moment().subtract(7, "days");
-    document.querySelector(
-      "#showPeriodTime"
-    ).textContent = `From ${theDayBeforeToday7.format(
-      "MMM D"
-    )} to ${today.format("MMM D")}`;
-  };
-  showPeriodTime(periodData);
+  showPeriodTime();
 
   periodData.forEach(element => {
     //创建 table 的 tr 元素以及其子元素
@@ -179,7 +182,7 @@ let renderPeriod = periodData => {
                 renderMe(periodData);
               }
             });
-            requestForPeriod.open("post", "http://localhost:3000/period", true);
+            requestForPeriod.open("post", `${serverAddress}/period`, true);
             //发送的req.body 当中的格式是 JSON 格式. 服务器会有中间件把他们转为 Javascript Object
             requestForPeriod.setRequestHeader(
               "Content-Type",
@@ -200,11 +203,7 @@ let renderPeriod = periodData => {
           }
         }
       });
-      requestForDelete.open(
-        "delete",
-        "http://localhost:3000/deleteRecord",
-        true
-      );
+      requestForDelete.open("delete", `${serverAddress}/deleteRecord`, true);
       requestForDelete.setRequestHeader("Content-Type", "application/json");
       requestForDelete.setRequestHeader("x-auth", token);
       console.log(JSON.stringify(deleteObj));
@@ -339,7 +338,7 @@ let checkSignIn = function(time) {
         }
       }
     });
-    requestForCheck.open("post", "http://localhost:3000/editcheck", true);
+    requestForCheck.open("post", `${serverAddress}/editcheck`, true);
     requestForCheck.setRequestHeader("Content-Type", "application/json");
     requestForCheck.setRequestHeader("x-auth", token);
     requestForCheck.send(JSON.stringify(checkSignInObj));
@@ -463,6 +462,11 @@ let nearTime = function(time) {
   };
 };
 
+// statistic 页面的按钮
+document.querySelector("#statistic-btn").addEventListener("click", function(e) {
+  location.assign(`/statistic#${token}`);
+});
+
 //clock In 的五个按钮
 //sign In 按钮
 document.querySelector("#signIn-btn").addEventListener("click", function(e) {
@@ -505,6 +509,9 @@ document.querySelector("#signIn-btn").addEventListener("click", function(e) {
         document.querySelector(
           "#signInModal-SignedInInfo-note"
         ).textContent = `note: ${result.note}`;
+        document
+          .querySelector("#signInModal-SignedInInfo")
+          .setAttribute("class", "row");
       }
     })
     .catch(e => {
@@ -556,7 +563,7 @@ document
         setClockInMessagePassedByMoment(signInRecord.signInTime);
       }
     });
-    requestForSignIn.open("post", "http://localhost:3000/signIn", true);
+    requestForSignIn.open("post", `${serverAddress}/signIn`, true);
     requestForSignIn.setRequestHeader("Content-Type", "application/json");
     requestForSignIn.setRequestHeader("x-auth", token);
     requestForSignIn.send(JSON.stringify(signInObj));
@@ -576,7 +583,7 @@ document
         setClockInMessagePassedByMoment(signInRecord.signInTime);
       }
     });
-    requestForSignIn.open("post", "http://localhost:3000/signIn", true);
+    requestForSignIn.open("post", `${serverAddress}/signIn`, true);
     requestForSignIn.setRequestHeader("Content-Type", "application/json");
     requestForSignIn.setRequestHeader("x-auth", token);
     requestForSignIn.send(JSON.stringify(signInObj));
@@ -596,7 +603,7 @@ document
         setClockInMessagePassedByMoment(signInRecord.signInTime);
       }
     });
-    requestForSignIn.open("post", "http://localhost:3000/signIn", true);
+    requestForSignIn.open("post", `${serverAddress}/signIn`, true);
     requestForSignIn.setRequestHeader("Content-Type", "application/json");
     requestForSignIn.setRequestHeader("x-auth", token);
     requestForSignIn.send(JSON.stringify(signInObj));
@@ -612,6 +619,9 @@ document.querySelector("#signOut-btn").addEventListener("click", function(e) {
       //找到签到记录, 检查 signOut 记录是否有值, 如果有则显示无法 SignOut.
       if (result.signOut) {
         //如果 signOut 记录存在.
+        document
+          .querySelector("#signOutModal-SignedInInfo")
+          .setAttribute("class", "row");
         document
           .querySelector("#signOutModal-signInFirst")
           .setAttribute("class", "d-none");
@@ -661,6 +671,13 @@ document.querySelector("#signOut-btn").addEventListener("click", function(e) {
         document
           .querySelector("#signOutModal-SignedInInfo")
           .setAttribute("class", "d-none");
+        document
+          .querySelector("#signOutModal-SignOutOthers")
+          .setAttribute("class", "row");
+        // 设置样式的时候, d-block 起到显示作用, 但是会重置所有 class 属性为 d-block
+        document
+          .querySelector("#signOutModal-SignOutAvaTime")
+          .setAttribute("class", "row");
         //根据当前的时间 time 去计算下班时间. 也是大概前后5分钟的, 跟 signIn 是一样的逻辑.
         let threeTimes = nearTime(time);
         //现在根据上面获得的三个时间数据(threeTimes 对象), 去渲染 modal 中对应按钮显示的时间点.
@@ -719,7 +736,7 @@ document
         setClockInMessagePassedByMoment(signInRecord.signInTime);
       }
     });
-    requestForSignOut.open("post", "http://localhost:3000/signOut", true);
+    requestForSignOut.open("post", `${serverAddress}/signOut`, true);
     requestForSignOut.setRequestHeader("Content-Type", "application/json");
     requestForSignOut.setRequestHeader("x-auth", token);
     requestForSignOut.send(JSON.stringify(signOutObj));
@@ -745,7 +762,7 @@ document
         setClockInMessagePassedByMoment(signInRecord.signInTime);
       }
     });
-    requestForSignOut.open("post", "http://localhost:3000/signOut", true);
+    requestForSignOut.open("post", `${serverAddress}/signOut`, true);
     requestForSignOut.setRequestHeader("Content-Type", "application/json");
     requestForSignOut.setRequestHeader("x-auth", token);
     requestForSignOut.send(JSON.stringify(signOutObj));
@@ -771,7 +788,7 @@ document
         setClockInMessagePassedByMoment(signInRecord.signInTime);
       }
     });
-    requestForSignOut.open("post", "http://localhost:3000/signOut", true);
+    requestForSignOut.open("post", `${serverAddress}/signOut`, true);
     requestForSignOut.setRequestHeader("Content-Type", "application/json");
     requestForSignOut.setRequestHeader("x-auth", token);
     requestForSignOut.send(JSON.stringify(signOutObj));
@@ -811,7 +828,7 @@ window.onload = function() {
     }
   });
   //页面渲染路由, 和服务器的功能路由, 不是一种路由. /user/me 和 /me 完全意思不同.
-  requestForUserInfo.open("get", "http://localhost:3000/user/me", true);
+  requestForUserInfo.open("get", `${serverAddress}/user/me`, true);
   requestForUserInfo.setRequestHeader("Content-Type", "application/json");
   //这样,服务器就能通过 authentic 去检查 header 当中的 x-auth 当中的 token 字段了
   requestForUserInfo.setRequestHeader("x-auth", token);
@@ -830,7 +847,7 @@ window.onload = function() {
       renderMe(periodData);
     }
   });
-  requestForPeriod.open("post", "http://localhost:3000/period", true);
+  requestForPeriod.open("post", `${serverAddress}/period`, true);
   //发送的req.body 当中的格式是 JSON 格式. 服务器会有中间件把他们转为 Javascript Object
   requestForPeriod.setRequestHeader("Content-Type", "application/json");
   requestForPeriod.setRequestHeader("x-auth", token);
@@ -861,7 +878,7 @@ window.onload = function() {
   });
   requestForMessageBoard.open(
     "get",
-    "http://localhost:3000/user/messageBoard",
+    `${serverAddress}/user/messageBoard`,
     true
   );
   //发送的req.body 当中的格式是 JSON 格式. 服务器会有中间件把他们转为 Javascript Object
@@ -962,7 +979,7 @@ document
               renderMe(periodData);
             }
           });
-          requestForPeriod.open("post", "http://localhost:3000/period", true);
+          requestForPeriod.open("post", `${serverAddress}/period`, true);
           //发送的req.body 当中的格式是 JSON 格式. 服务器会有中间件把他们转为 Javascript Object
           requestForPeriod.setRequestHeader("Content-Type", "application/json");
           requestForPeriod.setRequestHeader("x-auth", token);
@@ -988,7 +1005,7 @@ document
         // renderMe(messageBoardData);
       }
     });
-    requestForResign.open("post", "http://localhost:3000/reSign", true);
+    requestForResign.open("post", `${serverAddress}/reSign`, true);
     //发送的req.body 当中的格式是 JSON 格式. 服务器会有中间件把他们转为 Javascript Object
     requestForResign.setRequestHeader("Content-Type", "application/json");
     requestForResign.setRequestHeader("x-auth", token);
@@ -1065,7 +1082,7 @@ document
               renderMe(periodData);
             }
           });
-          requestForPeriod.open("post", "http://localhost:3000/period", true);
+          requestForPeriod.open("post", `${serverAddress}/period`, true);
           //发送的req.body 当中的格式是 JSON 格式. 服务器会有中间件把他们转为 Javascript Object
           requestForPeriod.setRequestHeader("Content-Type", "application/json");
           requestForPeriod.setRequestHeader("x-auth", token);
@@ -1083,7 +1100,7 @@ document
         }
       }
     });
-    requestForEdit.open("post", "http://localhost:3000/edit", true);
+    requestForEdit.open("post", `${serverAddress}/edit`, true);
     //发送的req.body 当中的格式是 JSON 格式. 服务器会有中间件把他们转为 Javascript Object
     requestForEdit.setRequestHeader("Content-Type", "application/json");
     requestForEdit.setRequestHeader("x-auth", token);
@@ -1147,7 +1164,7 @@ document.querySelector("#modal-submit").addEventListener("click", function(e) {
     });
     requestForEditMessageBoard.open(
       "post",
-      "http://localhost:3000/user/editMessageBoard",
+      `${serverAddress}/user/editMessageBoard`,
       true
     );
     //发送的req.body 当中的格式是 JSON 格式. 服务器会有中间件把他们转为 Javascript Object

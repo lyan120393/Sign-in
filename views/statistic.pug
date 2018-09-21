@@ -1,0 +1,120 @@
+html
+  include include/header.pug
+  link(rel="stylesheet" type="text/css" href="/css/login.css")
+  body
+  nav.navbar.navbar-expand-lg.light.bg-light.fixed-top
+    a.navbar-brand#nav-logo.text-primary POPO
+    .ml-auto
+      span.align-baseline#username 
+  section#login-form-section
+    form.container.py-5#login-form
+      .form-group
+        button.btn.btn-outline-primary#gotoPersonalPage back
+        p.h4.text-center Statistic Page
+      .form-group
+        p Search period of workdays
+          .form-group
+            p Start date
+              .row
+                .col-4
+                  .input-group-prepend
+                    span.input-group-text month:
+                    input.form-control#startDate-month(type="text" placeholder="month")
+                .col-4
+                  .input-group-prepend
+                    span.input-group-text day:
+                    input.form-control#startDate-day(type="text" placeholder="day")
+                .col-4
+                  .input-group-prepend
+                    span.input-group-text year:
+                    input.form-control#startDate-year(type="text" placeholder="year")
+          .form-group
+            p End date
+              .row
+                .col-4
+                  .input-group-prepend
+                    span.input-group-text month:
+                    input.form-control#endDate-month(type="text" placeholder="month")
+                .col-4
+                  .input-group-prepend
+                    span.input-group-text day:
+                    input.form-control#endDate-day(type="text" placeholder="day")
+                .col-4
+                  .input-group-prepend
+                    span.input-group-text year:
+                    input.form-control#endDate-year(type="text" placeholder="year")
+          .form-group.text-right
+            .row
+              .col.pt-2
+                button.mr-auto#periodSearch-search(type="button" class="btn btn-primary") Search
+          .form-group
+            p Record Period Statictis
+              .row
+                .col.text-center
+                  p#showTotal-hours 
+                  p#showTotal-drinkAndApptizer 
+          .table-responsive.pt-2
+            p Workday Record
+            table.table.table-striped.table-bordered.text-center
+              thread
+                tr
+                  th(scope="col") week
+                  th(scope="col") date
+                  th(scope="col") In
+                  th(scope="col") Out
+                  th(scope="col") hours
+                  th(scope="col") minutes
+                  th(scope="col") drink
+                  th(scope="col") apptizer
+                  th(scope="col") notes
+                  th(scope="col") Edit
+                  th(scope="col") Delete
+              tbody#table-body
+    div#editModal(class="modal fade" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true")
+          .modal-dialog.modal-dialog-centered(role="document")
+            .modal-content
+              .modal-header
+                h5.modal-title#editModalLabel Edit Record Confirm
+                button.close(type="button" data-dismiss="modal" aria-label="Close")
+                  span(aria-hidden="true") x
+              .modal-body
+                .container-fluid
+                  lable.col-form-label the date
+                    .row
+                      .col
+                        input.form-control#editModal-month(type="text" placeholder="month" disabled)
+                      .col
+                        input.form-control#editModal-day(type="text" placeholder="day" disabled)
+                      .col
+                        input.form-control#editModal-year(type="text" placeholder="year" disabled)
+                  .py-2
+                  lable.col-form-label Sign In Time
+                    .row
+                      .col
+                        input.form-control#editModal-InHH(type="text" placeholder="HH")
+                      .col
+                        input.form-control#editModal-Inmm(type="text" placeholder="mm")
+                  .py-2        
+                  lable.col-form-label Sign Out Time
+                    .row
+                      .col
+                        input.form-control#editModal-OutHH(type="text" placeholder="HH")
+                      .col
+                        input.form-control#editModal-Outmm(type="text" placeholder="mm")
+                  .py-2
+                  lable.col-form-label Others
+                    .row
+                      .col
+                        input.form-control#editModal-apptizer(type="text" placeholder="apptizer")
+                      .col
+                        input.form-control#editModal-drink(type="text" placeholder="drink")
+                      .col
+                        input.form-control#editModal-notes(type="text" placeholder="notes")
+              .modal-footer
+                button(type="button" class="btn btn-secondary" data-dismiss="modal") Close
+                button#editModal-submit(type="button" class="btn btn-primary") Submit
+
+  include include/footer.pug
+  script(src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment-with-locales.min.js")
+  script(src="/js/functions.js")
+  script(src="/js/statistic.js")

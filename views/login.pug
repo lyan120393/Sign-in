@@ -4,7 +4,7 @@ html
   link(rel="stylesheet" type="text/css" href="/css/login.css")
   body
   nav.navbar.navbar-expand-lg.light.bg-light.fixed-top
-    a.navbar-brand(href="localhost:3000/login") POPO
+    a.navbar-brand#nav-logo(href="#") POPO
   section#login-form-section
     form.container.py-5#login-form
       .form-group
@@ -16,6 +16,7 @@ html
       .form-group
         label(for="exampleInputPassword") Password
         input.form-control#exampleInputPassword(type="password" placeholder="Password")
+      .form-group#showCorW      
       .container.row
         .col-6.text-center
           button.btn.btn-outline-primary(type="submit") Login

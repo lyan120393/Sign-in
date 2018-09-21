@@ -38,6 +38,10 @@ app.get("/me", (req, res) => {
   res.render("me.pug");
 });
 
+app.get("/statistic", (req, res) => {
+  res.render("statistic.pug");
+});
+
 //用户注册
 //用户注册成功之后真的有必要给 token 吗? 不给 Token.
 app.post("/reg", (req, res) => {
@@ -46,7 +50,7 @@ app.post("/reg", (req, res) => {
     username: req.body.username,
     password: req.body.password,
     //员工所在店铺的 ID 号码.
-    belongStore: req.body.belongStore
+    belongStore: req.body.belongStore || `Not Given`
   });
   //防止E-mail 重复
   People.findOne({ email: newUser.email }).then(existUser => {
