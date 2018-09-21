@@ -4,13 +4,15 @@
   "description": "Sign-in Project for members who work in Popo",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lyan120393/Sign-in.git"
   },
-  "author": "",
+  "engine": "10.4.0",
+  "author": "Longyituo Yan",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/lyan120393/Sign-in/issues"

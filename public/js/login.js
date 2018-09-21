@@ -1,7 +1,7 @@
 console.log("login.js has connected");
 let loginObj = {};
 // `${serverAddress}/xxx`
-const serverAddress = "http://localhost:3000";
+const serverAddress = "https://sleepy-citadel-66405.herokuapp.com";
 document.querySelector("#nav-logo").addEventListener("click", function(e) {
   location.assign(`${serverAddress}/login`);
 });

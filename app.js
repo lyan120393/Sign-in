@@ -9,6 +9,7 @@ const _ = require("lodash");
 const bcrypt = require("bcryptjs");
 const moment = require("moment");
 const { toUnix } = require("./server/functions/toUnix");
+const port = process.env.PORT || 3000;
 
 const app = express();
 
@@ -779,6 +780,6 @@ app.post("/createStore", (req, res) => {
 //     });
 // });
 
-app.listen(3000, () => {
-  console.log(`Server is running`);
+app.listen(port, () => {
+  console.log(`Server is running, port is ${port}`);
 });

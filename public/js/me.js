@@ -2,7 +2,7 @@ console.log(`me.js has connected`);
 //hash使用 substring(1)减去前面的#符号.
 const token = location.hash.substring(1);
 // `${serverAddress}`
-const serverAddress = "http://localhost:3000";
+const serverAddress = "https://sleepy-citadel-66405.herokuapp.com";
 // console.log(token);
 //拿到 token 之后, 在页面进行加载的时候, 就会去访问服务器的/user/me 的路由去获得需要的一切信息.
 
