@@ -3,7 +3,7 @@ mongoose.Promise = global.Promise;
 
 const db = mongoose
   .connect(
-    `mongodb://localhost:27017/SingInDev` || process.env.MONGODB_URI,
+    process.env.MONGODB_URI || `mongodb://localhost:27017/SingInDev`,
     { useNewUrlParser: true }
   )
   .then(() => console.log(`Database has been Connected successfully`))
