@@ -380,8 +380,8 @@ app.delete("/deleteRecord", authentic, (req, res) => {
 
     let workdayPromise = new Promise((resolve, reject) => {
       let workday = user.workdays.filter(workday => {
-        console.log(moment(moment.unix(workday.signIn)).format("MM-DD-YYYY"));
-        console.log(moment(moment.unix(deleteUnix)).format("MM-DD-YYYY"));
+        // console.log(moment(moment.unix(workday.signIn)).format("MM-DD-YYYY"));
+        // console.log(moment(moment.unix(deleteUnix)).format("MM-DD-YYYY"));
         return (
           //把 deleteRecordObj 的 unix 数值转化为 MM-DD-YYYY 的格式.
           moment(moment.unix(workday.signIn)).format("MM-DD-YYYY") ===
@@ -518,7 +518,7 @@ app.post("/edit", authentic, (req, res) => {
     note: editRecordObj.note,
     hours: moment(newSignOut).diff(moment(newSignIn))
   };
-  console.log(tempWorkday);
+  // console.log(tempWorkday);
   //根据用户提供的新的签入时间和签出时间重新计算
   // if (newSignIn || newSignOut) {
   //   if (newSignIn && newSignOut) {
@@ -575,8 +575,8 @@ app.post("/edit", authentic, (req, res) => {
 
   let workdayPromise = new Promise((resolve, reject) => {
     let workday = user.workdays.filter(workday => {
-      console.log(moment(moment.unix(workday.signIn)).format("MM-DD-YYYY"));
-      console.log(moment(moment.unix(tempWorkday.signIn)).format("MM-DD-YYYY"));
+      // console.log(moment(moment.unix(workday.signIn)).format("MM-DD-YYYY"));
+      // console.log(moment(moment.unix(tempWorkday.signIn)).format("MM-DD-YYYY"));
       return (
         //把 deleteRecordObj 的 unix 数值转化为 MM-DD-YYYY 的格式.
         moment(moment.unix(workday.signIn)).format("MM-DD-YYYY") ===

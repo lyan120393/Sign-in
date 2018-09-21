@@ -37,7 +37,7 @@ let renderDrinkAndApptizer = drinkAndApptizerCounter => {
   }
 };
 renderDrinkAndApptizer(drinkAndApptizerCounter);
-let renderPeriod = (periodData, periodObj) => {
+let renderPeriodforStatistic = (periodData, periodObj) => {
   //首先拿到数组, 然后遍历数组的每一个元素, 可以得知每一个工作日的信息.并进行渲染.
   //对数组进行重新排序. 根据他们的返回日期.
   periodData.sort(function(a, b) {
@@ -133,7 +133,7 @@ let renderPeriod = (periodData, periodObj) => {
               while (timeTable.firstChild) {
                 timeTable.removeChild(timeTable.firstChild);
               }
-              renderPeriod(periodData, periodObj);
+              renderPeriodforStatistic(periodData, periodObj);
               renderHoursCounter(hoursCounter);
               renderDrinkAndApptizer(drinkAndApptizerCounter);
             }
@@ -221,7 +221,19 @@ document
     periodObj.dateEndMM = document.querySelector("#endDate-month").value;
     periodObj.dateEndDD = document.querySelector("#endDate-day").value;
     periodObj.dateEndYYYY = document.querySelector("#endDate-year").value;
-    if (periodObj.dateStartMM !== "" && periodObj.dateEndDD !== "") {
+    //使用 function 文件当中的 日期 validator
+    let resultValidator1 = dateValidator(
+      Number(periodObj.dateStartMM),
+      Number(periodObj.dateStartDD),
+      Number(periodObj.dateStartYYYY)
+    );
+    let resultValidator2 = dateValidator(
+      Number(periodObj.dateEndMM),
+      Number(periodObj.dateEndDD),
+      Number(periodObj.dateEndYYYY)
+    );
+    //当两个日期的结果 result 都为真, 判定数据合法, 然后进行提交数据给服务器.
+    if (resultValidator1 === true && resultValidator2 === true) {
       console.log(periodObj);
 
       const requestForPeriod = new XMLHttpRequest();
@@ -229,10 +241,21 @@ document
         if (e.target.readyState === 4) {
           const periodData = JSON.parse(e.target.responseText);
           console.log(periodData);
+          //重置页面上的统计数据
+          document
+            .querySelector("#periodInput-validInfo")
+            .setAttribute("class", "d-none");
+          let timeTable = document.querySelector("#table-body");
+          while (timeTable.firstChild) {
+            timeTable.removeChild(timeTable.firstChild);
+          }
+          hoursCounter = 0;
+          drinkAndApptizerCounter = 0;
+
           //这里需要的是如何根据返回的数据去进行渲染页面
           saveToLocal("periodData", periodData);
           //渲染数据: periodData 是从服务器拿到的数据, periodobj 是用户填写的数据.
-          renderPeriod(periodData, periodObj);
+          renderPeriodforStatistic(periodData, periodObj);
           renderHoursCounter(hoursCounter);
           renderDrinkAndApptizer(drinkAndApptizerCounter);
         }
@@ -246,6 +269,16 @@ document
       requestForPeriod.send(JSON.stringify(periodObj));
     } else {
       console.log(`cannot blank`);
+      //提示用户输入的内容不合法.
+      document
+        .querySelector("#periodInput-validInfo")
+        .setAttribute("class", "p");
+      document
+        .querySelector("#periodInput-validInfo")
+        .setAttribute("class", "text-danger");
+      document.querySelector(
+        "#periodInput-validInfo"
+      ).textContent = `data input is invalid`;
     }
   });
 
@@ -292,11 +325,7 @@ document
             // console.log(periodData);
             saveToLocal("periodData", periodData);
             //这里需要的是如何根据返回的数据去进行渲染页面
-            let timeTable = document.querySelector("#table-body");
-            while (timeTable.firstChild) {
-              timeTable.removeChild(timeTable.firstChild);
-            }
-            renderPeriod(periodData, periodObj);
+            renderPeriodforStatistic(periodData, periodObj);
             renderHoursCounter(hoursCounter);
             renderDrinkAndApptizer(drinkAndApptizerCounter);
           }

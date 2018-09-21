@@ -131,7 +131,7 @@ html
                 .row
                   .col
                     .input-group-prepend
-                      span.input-group-text month:
+                      span.input-group-text apptizer:
                       input.form-control#SignOutModal-apptizer(type="text" placeholder="apptizer")
                   .col
                     .input-group-prepend
@@ -170,6 +170,9 @@ html
               .row#signOutModal-signInFirst
                 .row
                   .col.text-nowrap.h5 You need SignIn before SignOut
+              .row
+                .row
+                  p.text-danger#signOutModal-noticedInfo
           .modal-footer
             button(type="button" class="btn btn-secondary" data-dismiss="modal") Close
     div#reSignInModal(class="modal fade" tabindex="-1" role="dialog" aria-labelledby="reSignInModalLabel" aria-hidden="true")
@@ -203,6 +206,7 @@ html
                     .input-group-prepend
                       span.input-group-text HH:
                       input.form-control#reSignInModal-InHH(type="text" placeholder="HH")
+                    small#emailHelp.form-text.text-muted 24-hour clock
                   .col
                     .input-group-prepend
                       span.input-group-text mm:
@@ -234,6 +238,8 @@ html
                     .input-group-prepend
                       span.input-group-text note:
                       input.form-control#reSignInModal-notes(type="text" placeholder="note")
+              .row.text-danger.pt-1
+                p#resign-validatorInfo 
           .modal-footer
             button(type="button" class="btn btn-secondary" data-dismiss="modal") Close
             button#reSignInModal-submit(type="button" class="btn btn-primary") Submit
@@ -300,6 +306,8 @@ html
                         .input-group-prepend
                           span.input-group-text note:
                           input.form-control#editModal-notes(type="text" placeholder="notes")
+                    .row.text-danger
+                      p#editModal-validatorInfo 
               .modal-footer
                 button(type="button" class="btn btn-secondary" data-dismiss="modal") Close
                 button#editModal-submit(type="button" class="btn btn-primary") Submit

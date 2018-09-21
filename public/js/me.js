@@ -547,6 +547,54 @@ let timeDivider = function(textContent) {
   let mm = moment(textContent, "HH:mm").format("mm");
   return { HH, mm };
 };
+//判断传入的日期是否是在今天和七天前范围之中的日期, 如果是则重新渲染页面,
+let updateIfBetweenSevenDay = function(unixTime) {
+  let today = moment();
+  let theDayBeforeToday7 = moment().subtract(7, "days");
+  //进行判断, 如果这一天的数据和今天的日期之间相差在7天以内, 我们需要给 period 路由发送请求, 获取最新的 perioddata
+  //如果这一天的数据, 和今天的日期相差超过了7天, 就不需要在获得最新的 perioddata 内容.
+  let todayFormat = today.format("YYYY-MM-DD");
+  let theDayBeforeToday7Format = theDayBeforeToday7.format("YYYY-MM-DD");
+  let theDay = moment.unix(unixTime).format("YYYY-MM-DD");
+  console.log(todayFormat, theDayBeforeToday7Format, theDay);
+  if (
+    moment(theDay).isBetween(theDayBeforeToday7Format, todayFormat, null, [])
+  ) {
+    //这一天是距离今天七天以内的日期
+    console.log(`between 7 days`);
+    const requestForPeriod = new XMLHttpRequest();
+    requestForPeriod.addEventListener("readystatechange", function(e) {
+      if (e.target.readyState === 4) {
+        const periodData = JSON.parse(e.target.responseText);
+        // console.log(periodData);
+        saveToLocal("periodData", periodData);
+        //这里需要的是如何根据返回的数据去进行渲染页面
+        let timeTable = document.querySelector("#table-body");
+        while (timeTable.firstChild) {
+          timeTable.removeChild(timeTable.firstChild);
+        }
+        renderMe(periodData);
+      }
+    });
+    requestForPeriod.open("post", `${serverAddress}/period`, true);
+    //发送的req.body 当中的格式是 JSON 格式. 服务器会有中间件把他们转为 Javascript Object
+    requestForPeriod.setRequestHeader("Content-Type", "application/json");
+    requestForPeriod.setRequestHeader("x-auth", token);
+    //获取今天的日期通过 moment.js, 并且推算出前一周的日期
+    let today = moment();
+    let theDayBeforeToday7 = moment().subtract(7, "days");
+    let periodObj = {
+      dateStartMM: theDayBeforeToday7.get("month") + 1,
+      dateStartDD: theDayBeforeToday7.get("date"),
+      dateStartYYYY: theDayBeforeToday7.get("year"),
+      dateEndMM: today.get("month") + 1,
+      dateEndDD: today.get("date"),
+      dateEndYYYY: today.get("year")
+    };
+    //发送内容, 把我们的 login 这个 Object 转为 JSON 并进行发送.
+    requestForPeriod.send(JSON.stringify(periodObj));
+  }
+};
 //给 SignIn 的三个小按钮, 添加向服务器发送请求.
 document
   .querySelector("#signInModal-timeBtn-before")
@@ -561,6 +609,9 @@ document
         console.log(e.target.responseText);
         let signInRecord = JSON.parse(e.target.responseText);
         setClockInMessagePassedByMoment(signInRecord.signInTime);
+        ///
+        updateIfBetweenSevenDay(signInRecord.signInTime);
+        ///
       }
     });
     requestForSignIn.open("post", `${serverAddress}/signIn`, true);
@@ -581,6 +632,7 @@ document
         console.log(e.target.responseText);
         let signInRecord = JSON.parse(e.target.responseText);
         setClockInMessagePassedByMoment(signInRecord.signInTime);
+        updateIfBetweenSevenDay(signInRecord.signInTime);
       }
     });
     requestForSignIn.open("post", `${serverAddress}/signIn`, true);
@@ -601,6 +653,7 @@ document
         console.log(e.target.responseText);
         let signInRecord = JSON.parse(e.target.responseText);
         setClockInMessagePassedByMoment(signInRecord.signInTime);
+        updateIfBetweenSevenDay(signInRecord.signInTime);
       }
     });
     requestForSignIn.open("post", `${serverAddress}/signIn`, true);
@@ -725,21 +778,35 @@ document
     ).value;
     signOutObj.drink = document.querySelector("#SignOutModal-drink").value;
     signOutObj.note = document.querySelector("#SignOutModal-notes").value;
-    // console.log(signOutObj);
-
-    const requestForSignOut = new XMLHttpRequest();
-    requestForSignOut.addEventListener("readystatechange", function(e) {
-      if (e.target.readyState === 4) {
-        $("#signOutModal").modal("hide");
-        // console.log(e.target.responseText);
-        let signInRecord = JSON.parse(e.target.responseText);
-        setClockInMessagePassedByMoment(signInRecord.signInTime);
-      }
-    });
-    requestForSignOut.open("post", `${serverAddress}/signOut`, true);
-    requestForSignOut.setRequestHeader("Content-Type", "application/json");
-    requestForSignOut.setRequestHeader("x-auth", token);
-    requestForSignOut.send(JSON.stringify(signOutObj));
+    //进行数据验证
+    let resultValidator = foodValidator(
+      Number(signOutObj.apptizer),
+      Number(signOutObj.drink)
+    );
+    if (resultValidator === true) {
+      //清空不合法的数据提示
+      document.querySelector("#signOutModal-noticedInfo").textContent = ``;
+      // console.log(signOutObj);
+      const requestForSignOut = new XMLHttpRequest();
+      requestForSignOut.addEventListener("readystatechange", function(e) {
+        if (e.target.readyState === 4) {
+          $("#signOutModal").modal("hide");
+          // console.log(e.target.responseText);
+          let signInRecord = JSON.parse(e.target.responseText);
+          setClockInMessagePassedByMoment(signInRecord.signIn);
+          updateIfBetweenSevenDay(signInRecord.signIn);
+        }
+      });
+      requestForSignOut.open("post", `${serverAddress}/signOut`, true);
+      requestForSignOut.setRequestHeader("Content-Type", "application/json");
+      requestForSignOut.setRequestHeader("x-auth", token);
+      requestForSignOut.send(JSON.stringify(signOutObj));
+    } else {
+      console.log(`data invalid`);
+      document.querySelector(
+        "#signOutModal-noticedInfo"
+      ).textContent = `Data Invalid`;
+    }
   });
 document
   .querySelector("#signOutModal-timeBtn-nearest")
@@ -752,20 +819,35 @@ document
     signOutObj.drink = document.querySelector("#SignOutModal-drink").value;
     signOutObj.note = document.querySelector("#SignOutModal-notes").value;
     // console.log(signOutObj);
-
-    const requestForSignOut = new XMLHttpRequest();
-    requestForSignOut.addEventListener("readystatechange", function(e) {
-      if (e.target.readyState === 4) {
-        $("#signOutModal").modal("hide");
-        // console.log(e.target.responseText);
-        let signInRecord = JSON.parse(e.target.responseText);
-        setClockInMessagePassedByMoment(signInRecord.signInTime);
-      }
-    });
-    requestForSignOut.open("post", `${serverAddress}/signOut`, true);
-    requestForSignOut.setRequestHeader("Content-Type", "application/json");
-    requestForSignOut.setRequestHeader("x-auth", token);
-    requestForSignOut.send(JSON.stringify(signOutObj));
+    //进行数据验证
+    let resultValidator = foodValidator(
+      Number(signOutObj.apptizer),
+      Number(signOutObj.drink)
+    );
+    if (resultValidator === true) {
+      //清空不合法的数据提示
+      document.querySelector("#signOutModal-noticedInfo").textContent = ``;
+      // console.log(signOutObj);
+      const requestForSignOut = new XMLHttpRequest();
+      requestForSignOut.addEventListener("readystatechange", function(e) {
+        if (e.target.readyState === 4) {
+          $("#signOutModal").modal("hide");
+          // console.log(e.target.responseText);
+          let signInRecord = JSON.parse(e.target.responseText);
+          setClockInMessagePassedByMoment(signInRecord.signIn);
+          updateIfBetweenSevenDay(signInRecord.signIn);
+        }
+      });
+      requestForSignOut.open("post", `${serverAddress}/signOut`, true);
+      requestForSignOut.setRequestHeader("Content-Type", "application/json");
+      requestForSignOut.setRequestHeader("x-auth", token);
+      requestForSignOut.send(JSON.stringify(signOutObj));
+    } else {
+      console.log(`data invalid`);
+      document.querySelector(
+        "#signOutModal-noticedInfo"
+      ).textContent = `Data Invalid`;
+    }
   });
 document
   .querySelector("#signOutModal-timeBtn-after")
@@ -777,33 +859,36 @@ document
     ).value;
     signOutObj.drink = document.querySelector("#SignOutModal-drink").value;
     signOutObj.note = document.querySelector("#SignOutModal-notes").value;
-    // console.log(signOutObj);
-
-    const requestForSignOut = new XMLHttpRequest();
-    requestForSignOut.addEventListener("readystatechange", function(e) {
-      if (e.target.readyState === 4) {
-        $("#signOutModal").modal("hide");
-        // console.log(e.target.responseText);
-        let signInRecord = JSON.parse(e.target.responseText);
-        setClockInMessagePassedByMoment(signInRecord.signInTime);
-      }
-    });
-    requestForSignOut.open("post", `${serverAddress}/signOut`, true);
-    requestForSignOut.setRequestHeader("Content-Type", "application/json");
-    requestForSignOut.setRequestHeader("x-auth", token);
-    requestForSignOut.send(JSON.stringify(signOutObj));
+    //进行数据验证
+    let resultValidator = foodValidator(
+      Number(signOutObj.apptizer),
+      Number(signOutObj.drink)
+    );
+    if (resultValidator === true) {
+      //清空不合法的数据提示
+      document.querySelector("#signOutModal-noticedInfo").textContent = ``;
+      // console.log(signOutObj);
+      const requestForSignOut = new XMLHttpRequest();
+      requestForSignOut.addEventListener("readystatechange", function(e) {
+        if (e.target.readyState === 4) {
+          $("#signOutModal").modal("hide");
+          // console.log(e.target.responseText);
+          let signInRecord = JSON.parse(e.target.responseText);
+          setClockInMessagePassedByMoment(signInRecord.signIn);
+          updateIfBetweenSevenDay(signInRecord.signIn);
+        }
+      });
+      requestForSignOut.open("post", `${serverAddress}/signOut`, true);
+      requestForSignOut.setRequestHeader("Content-Type", "application/json");
+      requestForSignOut.setRequestHeader("x-auth", token);
+      requestForSignOut.send(JSON.stringify(signOutObj));
+    } else {
+      console.log(`data invalid`);
+      document.querySelector(
+        "#signOutModal-noticedInfo"
+      ).textContent = `Data Invalid`;
+    }
   });
-
-//Resign 按钮
-// document.querySelector("#reSign-btn").addEventListener("click", function(e) {
-//   e.preventDefault();
-//   //弹出新的 modal , 让用户输入 signIn 的时间, 和 signOut 的时间, 然后点击提交之后开始向服务器发送请求.
-
-//   //如果已经存在记录则无法通过 resignIn 签到.
-//   //如果没有记录则进行签到.
-
-//   //并把返回的结果显示在页面上.
-// });
 
 //当页面加载的时候,我们可以执行的脚本.
 window.onload = function() {
@@ -937,79 +1022,120 @@ document
 
     //验证数据是否合法, 如果合法
     //检查确保数据的类型都是对的.
-
-    //隐藏 modal 模块
-    $("#reSignInModal").modal("hide");
-    //发送数据给服务器的 resign 路由.
-    const requestForResign = new XMLHttpRequest();
-    requestForResign.addEventListener("readystatechange", function(e) {
-      if (e.target.readyState === 4) {
-        const theResignDate = JSON.parse(e.target.responseText);
-        //如果成功的拿到了这一天的数据, 我们可以如下操作.
-        //获取今天的日期通过 moment.js, 并且推算出前一周的日期
-        let today = moment();
-        let theDayBeforeToday7 = moment().subtract(7, "days");
-        //进行判断, 如果这一天的数据和今天的日期之间相差在7天以内, 我们需要给 period 路由发送请求, 获取最新的 perioddata
-        //如果这一天的数据, 和今天的日期相差超过了7天, 就不需要在获得最新的 perioddata 内容.
-        let todayFormat = today.format("YYYY-MM-DD");
-        let theDayBeforeToday7Format = theDayBeforeToday7.format("YYYY-MM-DD");
-        let theDay = moment.unix(theResignDate.signIn).format("YYYY-MM-DD");
-        console.log(todayFormat, theDayBeforeToday7Format, theDay);
-        if (
-          moment(theDay).isBetween(
-            theDayBeforeToday7Format,
-            todayFormat,
-            null,
-            []
-          )
-        ) {
-          //这一天是距离今天七天以内的日期
-          console.log(`between 7 days`);
-          const requestForPeriod = new XMLHttpRequest();
-          requestForPeriod.addEventListener("readystatechange", function(e) {
-            if (e.target.readyState === 4) {
-              const periodData = JSON.parse(e.target.responseText);
-              // console.log(periodData);
-              saveToLocal("periodData", periodData);
-              //这里需要的是如何根据返回的数据去进行渲染页面
-              let timeTable = document.querySelector("#table-body");
-              while (timeTable.firstChild) {
-                timeTable.removeChild(timeTable.firstChild);
-              }
-              renderMe(periodData);
-            }
-          });
-          requestForPeriod.open("post", `${serverAddress}/period`, true);
-          //发送的req.body 当中的格式是 JSON 格式. 服务器会有中间件把他们转为 Javascript Object
-          requestForPeriod.setRequestHeader("Content-Type", "application/json");
-          requestForPeriod.setRequestHeader("x-auth", token);
+    let resultValidator1 = dateValidator(
+      Number(resignObj.signInMM),
+      Number(resignObj.signInDD),
+      Number(resignObj.signInYYYY)
+    );
+    let resultValidator2 = dateValidator(
+      Number(resignObj.signOutMM),
+      Number(resignObj.signOutDD),
+      Number(resignObj.signOutYYYY)
+    );
+    let resultValidator3 = hoursValidator(
+      Number(resignObj.signInHH),
+      Number(resignObj.signInmm)
+    );
+    let resultValidator4 = hoursValidator(
+      Number(resignObj.signOutHH),
+      Number(resignObj.signOutmm)
+    );
+    let resultValidator5 = foodValidator(
+      Number(resignObj.apptizer),
+      Number(resignObj.drink)
+    );
+    if (
+      resultValidator1 === true &&
+      resultValidator2 === true &&
+      resultValidator3 === true &&
+      resultValidator4 === true &&
+      resultValidator5 === true
+    ) {
+      //重置错误提示
+      document.querySelector("#resign-validatorInfo").textContent = ``;
+      //隐藏 modal 模块
+      $("#reSignInModal").modal("hide");
+      //发送数据给服务器的 resign 路由.
+      const requestForResign = new XMLHttpRequest();
+      requestForResign.addEventListener("readystatechange", function(e) {
+        if (e.target.readyState === 4) {
+          const theResignDate = JSON.parse(e.target.responseText);
+          //如果成功的拿到了这一天的数据, 我们可以如下操作.
           //获取今天的日期通过 moment.js, 并且推算出前一周的日期
           let today = moment();
           let theDayBeforeToday7 = moment().subtract(7, "days");
-          let periodObj = {
-            dateStartMM: theDayBeforeToday7.get("month") + 1,
-            dateStartDD: theDayBeforeToday7.get("date"),
-            dateStartYYYY: theDayBeforeToday7.get("year"),
-            dateEndMM: today.get("month") + 1,
-            dateEndDD: today.get("date"),
-            dateEndYYYY: today.get("year")
-          };
-          //发送内容, 把我们的 login 这个 Object 转为 JSON 并进行发送.
-          requestForPeriod.send(JSON.stringify(periodObj));
-        }
-        //获得服务器返回的最新的 messageBoard 的信息
+          //进行判断, 如果这一天的数据和今天的日期之间相差在7天以内, 我们需要给 period 路由发送请求, 获取最新的 perioddata
+          //如果这一天的数据, 和今天的日期相差超过了7天, 就不需要在获得最新的 perioddata 内容.
+          let todayFormat = today.format("YYYY-MM-DD");
+          let theDayBeforeToday7Format = theDayBeforeToday7.format(
+            "YYYY-MM-DD"
+          );
+          let theDay = moment.unix(theResignDate.signIn).format("YYYY-MM-DD");
+          console.log(todayFormat, theDayBeforeToday7Format, theDay);
+          if (
+            moment(theDay).isBetween(
+              theDayBeforeToday7Format,
+              todayFormat,
+              null,
+              []
+            )
+          ) {
+            //这一天是距离今天七天以内的日期
+            console.log(`between 7 days`);
+            const requestForPeriod = new XMLHttpRequest();
+            requestForPeriod.addEventListener("readystatechange", function(e) {
+              if (e.target.readyState === 4) {
+                const periodData = JSON.parse(e.target.responseText);
+                // console.log(periodData);
+                saveToLocal("periodData", periodData);
+                //这里需要的是如何根据返回的数据去进行渲染页面
+                let timeTable = document.querySelector("#table-body");
+                while (timeTable.firstChild) {
+                  timeTable.removeChild(timeTable.firstChild);
+                }
+                renderMe(periodData);
+              }
+            });
+            requestForPeriod.open("post", `${serverAddress}/period`, true);
+            //发送的req.body 当中的格式是 JSON 格式. 服务器会有中间件把他们转为 Javascript Object
+            requestForPeriod.setRequestHeader(
+              "Content-Type",
+              "application/json"
+            );
+            requestForPeriod.setRequestHeader("x-auth", token);
+            //获取今天的日期通过 moment.js, 并且推算出前一周的日期
+            let today = moment();
+            let theDayBeforeToday7 = moment().subtract(7, "days");
+            let periodObj = {
+              dateStartMM: theDayBeforeToday7.get("month") + 1,
+              dateStartDD: theDayBeforeToday7.get("date"),
+              dateStartYYYY: theDayBeforeToday7.get("year"),
+              dateEndMM: today.get("month") + 1,
+              dateEndDD: today.get("date"),
+              dateEndYYYY: today.get("year")
+            };
+            //发送内容, 把我们的 login 这个 Object 转为 JSON 并进行发送.
+            requestForPeriod.send(JSON.stringify(periodObj));
+          }
+          //获得服务器返回的最新的 messageBoard 的信息
 
-        // console.log(theResignDate);
-        // saveToLocal("messageBoardData", messageBoardData);
-        //使用 renderMe 功能重新渲染页面.
-        // renderMe(messageBoardData);
-      }
-    });
-    requestForResign.open("post", `${serverAddress}/reSign`, true);
-    //发送的req.body 当中的格式是 JSON 格式. 服务器会有中间件把他们转为 Javascript Object
-    requestForResign.setRequestHeader("Content-Type", "application/json");
-    requestForResign.setRequestHeader("x-auth", token);
-    requestForResign.send(JSON.stringify(resignObj));
+          // console.log(theResignDate);
+          // saveToLocal("messageBoardData", messageBoardData);
+          //使用 renderMe 功能重新渲染页面.
+          // renderMe(messageBoardData);
+        }
+      });
+      requestForResign.open("post", `${serverAddress}/reSign`, true);
+      //发送的req.body 当中的格式是 JSON 格式. 服务器会有中间件把他们转为 Javascript Object
+      requestForResign.setRequestHeader("Content-Type", "application/json");
+      requestForResign.setRequestHeader("x-auth", token);
+      requestForResign.send(JSON.stringify(resignObj));
+    } else {
+      console.log(`Data Invalid`);
+      document.querySelector(
+        "#resign-validatorInfo"
+      ).textContent = `Data Invalid`;
+    }
 
     //根据服务器路由返回的结果, 把结果通过 renderMe() 渲染在页面.
   });
@@ -1039,72 +1165,115 @@ document
     editObj.drink = document.querySelector("#editModal-drink").value;
     editObj.note = document.querySelector("#editModal-notes").value;
 
-    console.log(editObj);
+    // console.log(editObj);
 
-    //隐藏 modal 模块
-    $("#editModal").modal("hide");
+    //验证数据是否合法, 如果合法
+    //检查确保数据的类型都是对的.
+    let resultValidator1 = dateValidator(
+      Number(editObj.signInMM),
+      Number(editObj.signInDD),
+      Number(editObj.signInYYYY)
+    );
+    let resultValidator2 = dateValidator(
+      Number(editObj.signOutMM),
+      Number(editObj.signOutDD),
+      Number(editObj.signOutYYYY)
+    );
+    let resultValidator3 = hoursValidator(
+      Number(editObj.signInHH),
+      Number(editObj.signInmm)
+    );
+    let resultValidator4 = hoursValidator(
+      Number(editObj.signOutHH),
+      Number(editObj.signOutmm)
+    );
+    let resultValidator5 = foodValidator(
+      Number(editObj.apptizer),
+      Number(editObj.drink)
+    );
+    if (
+      resultValidator1 === true &&
+      resultValidator2 === true &&
+      resultValidator3 === true &&
+      resultValidator4 === true &&
+      resultValidator5 === true
+    ) {
+      //重置数据不合法的提示信息
+      document.querySelector("#editModal-validatorInfo").textContent = "";
+      //隐藏 modal 模块
+      $("#editModal").modal("hide");
 
-    const requestForEdit = new XMLHttpRequest();
-    requestForEdit.addEventListener("readystatechange", function(e) {
-      if (e.target.readyState === 4) {
-        const theEditDate = JSON.parse(e.target.responseText);
-        //如果成功的拿到了这一天的数据, 我们可以如下操作.
-        //获取今天的日期通过 moment.js, 并且推算出前一周的日期
-        let today = moment();
-        let theDayBeforeToday7 = moment().subtract(7, "days");
-        //进行判断, 如果这一天的数据和今天的日期之间相差在7天以内, 我们需要给 period 路由发送请求, 获取最新的 perioddata
-        //如果这一天的数据, 和今天的日期相差超过了7天, 就不需要在获得最新的 perioddata 内容.
-        let todayFormat = today.format("YYYY-MM-DD");
-        let theDayBeforeToday7Format = theDayBeforeToday7.format("YYYY-MM-DD");
-        let theDay = moment.unix(theEditDate.signIn).format("YYYY-MM-DD");
-        console.log(todayFormat, theDayBeforeToday7Format, theDay);
-        if (
-          moment(theDay).isBetween(
-            theDayBeforeToday7Format,
-            todayFormat,
-            null,
-            []
-          )
-        ) {
-          //     //这一天是距离今天七天以内的日期
-          console.log(`between 7 days`);
-          const requestForPeriod = new XMLHttpRequest();
-          requestForPeriod.addEventListener("readystatechange", function(e) {
-            if (e.target.readyState === 4) {
-              const periodData = JSON.parse(e.target.responseText);
-              // console.log(periodData);
-              saveToLocal("periodData", periodData);
-              //这里需要的是如何根据返回的数据去进行渲染页面
-              let timeTable = document.querySelector("#table-body");
-              while (timeTable.firstChild) {
-                timeTable.removeChild(timeTable.firstChild);
+      const requestForEdit = new XMLHttpRequest();
+      requestForEdit.addEventListener("readystatechange", function(e) {
+        if (e.target.readyState === 4) {
+          const theEditDate = JSON.parse(e.target.responseText);
+          //如果成功的拿到了这一天的数据, 我们可以如下操作.
+          //获取今天的日期通过 moment.js, 并且推算出前一周的日期
+          let today = moment();
+          let theDayBeforeToday7 = moment().subtract(7, "days");
+          //进行判断, 如果这一天的数据和今天的日期之间相差在7天以内, 我们需要给 period 路由发送请求, 获取最新的 perioddata
+          //如果这一天的数据, 和今天的日期相差超过了7天, 就不需要在获得最新的 perioddata 内容.
+          let todayFormat = today.format("YYYY-MM-DD");
+          let theDayBeforeToday7Format = theDayBeforeToday7.format(
+            "YYYY-MM-DD"
+          );
+          let theDay = moment.unix(theEditDate.signIn).format("YYYY-MM-DD");
+          console.log(todayFormat, theDayBeforeToday7Format, theDay);
+          if (
+            moment(theDay).isBetween(
+              theDayBeforeToday7Format,
+              todayFormat,
+              null,
+              []
+            )
+          ) {
+            //     //这一天是距离今天七天以内的日期
+            console.log(`between 7 days`);
+            const requestForPeriod = new XMLHttpRequest();
+            requestForPeriod.addEventListener("readystatechange", function(e) {
+              if (e.target.readyState === 4) {
+                const periodData = JSON.parse(e.target.responseText);
+                // console.log(periodData);
+                saveToLocal("periodData", periodData);
+                //这里需要的是如何根据返回的数据去进行渲染页面
+                let timeTable = document.querySelector("#table-body");
+                while (timeTable.firstChild) {
+                  timeTable.removeChild(timeTable.firstChild);
+                }
+                renderMe(periodData);
               }
-              renderMe(periodData);
-            }
-          });
-          requestForPeriod.open("post", `${serverAddress}/period`, true);
-          //发送的req.body 当中的格式是 JSON 格式. 服务器会有中间件把他们转为 Javascript Object
-          requestForPeriod.setRequestHeader("Content-Type", "application/json");
-          requestForPeriod.setRequestHeader("x-auth", token);
-          let periodObj = {
-            dateStartMM: theDayBeforeToday7.get("month") + 1,
-            dateStartDD: theDayBeforeToday7.get("date"),
-            dateStartYYYY: theDayBeforeToday7.get("year"),
-            dateEndMM: today.get("month") + 1,
-            dateEndDD: today.get("date"),
-            dateEndYYYY: today.get("year")
-          };
-          // console.log(`periodObj is ${JSON.stringify(periodObj)}`);
-          //发送内容, 把我们的 login 这个 Object 转为 JSON 并进行发送.
-          requestForPeriod.send(JSON.stringify(periodObj));
+            });
+            requestForPeriod.open("post", `${serverAddress}/period`, true);
+            //发送的req.body 当中的格式是 JSON 格式. 服务器会有中间件把他们转为 Javascript Object
+            requestForPeriod.setRequestHeader(
+              "Content-Type",
+              "application/json"
+            );
+            requestForPeriod.setRequestHeader("x-auth", token);
+            let periodObj = {
+              dateStartMM: theDayBeforeToday7.get("month") + 1,
+              dateStartDD: theDayBeforeToday7.get("date"),
+              dateStartYYYY: theDayBeforeToday7.get("year"),
+              dateEndMM: today.get("month") + 1,
+              dateEndDD: today.get("date"),
+              dateEndYYYY: today.get("year")
+            };
+            // console.log(`periodObj is ${JSON.stringify(periodObj)}`);
+            //发送内容, 把我们的 login 这个 Object 转为 JSON 并进行发送.
+            requestForPeriod.send(JSON.stringify(periodObj));
+          }
         }
-      }
-    });
-    requestForEdit.open("post", `${serverAddress}/edit`, true);
-    //发送的req.body 当中的格式是 JSON 格式. 服务器会有中间件把他们转为 Javascript Object
-    requestForEdit.setRequestHeader("Content-Type", "application/json");
-    requestForEdit.setRequestHeader("x-auth", token);
-    requestForEdit.send(JSON.stringify(editObj));
+      });
+      requestForEdit.open("post", `${serverAddress}/edit`, true);
+      //发送的req.body 当中的格式是 JSON 格式. 服务器会有中间件把他们转为 Javascript Object
+      requestForEdit.setRequestHeader("Content-Type", "application/json");
+      requestForEdit.setRequestHeader("x-auth", token);
+      requestForEdit.send(JSON.stringify(editObj));
+    } else {
+      console.log(`data invalid`);
+      document.querySelector("#editModal-validatorInfo").textContent =
+        "Data Invalid";
+    }
   });
 
 //Modal 中的 submit 按钮按下去的时候, 执行的操作.
