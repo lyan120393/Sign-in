@@ -245,7 +245,7 @@ app.post("/signIn", authentic, (req, res) => {
       return reject(`reject: workday length is ${workday.length}`);
     }
   });
-
+  console.log(`signInTime is ${signInTime}`);
   workdayPromise
     .then(info => {
       let tempWorkday = {
