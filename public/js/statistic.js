@@ -2,7 +2,6 @@ console.log(`statistic.js has connected`);
 //hash使用 substring(1)减去前面的#符号.
 const token = location.hash.substring(1);
 // `${serverAddress}`
-const serverAddress = "https://sleepy-citadel-66405.herokuapp.com";
 // console.log(token);
 //这个 periodObj 要在一开始就声明.要供全局访问
 let periodObj = {};

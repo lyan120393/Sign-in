@@ -1,5 +1,4 @@
 console.log(`reg.js has connected`);
-const serverAddress = "https://sleepy-citadel-66405.herokuapp.com";
 let registerObj = {};
 document.querySelector("#nav-logo").addEventListener("click", function(e) {
   location.assign(`${serverAddress}/login`);
