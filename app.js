@@ -221,11 +221,13 @@ app.post("/signIn", authentic, (req, res) => {
   //signIn 的类型设置: 1.近似时间签到和自定义时间(必须当天);
   //所以用户传递过来的时间需要进行判定. 根据所传递过来的数据.
   let signInObj = _.pick(req.body, ["HH", "mm"]);
+  console.log(`signInObj's HH and mm are ${signInObj.HH} ${signInObj.mm}`);
   //根据用户传过来的数据进行确定签到时间的 unix 数值 signInTime
   let signInTime;
   if (signInObj.HH && signInObj.mm) {
     signInTime = toUnix({ HH: signInObj.HH, mm: signInObj.mm });
   }
+  console.log(`${moment.unix(signInTime).format("MM-DD-YYYY HH:mm")}`);
   //判断当天是否存在签到的数据根据 workday 数组的长度
   let workdayPromise = new Promise((resolve, reject) => {
     let workday = req.user.workdays.filter(workday => {

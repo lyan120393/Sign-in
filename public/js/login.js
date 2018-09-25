@@ -39,7 +39,9 @@ document.querySelector("#login-form").addEventListener("submit", function(e) {
             //获取服务返回的 Header, 然后在服务器上获取 x-auth
             let header = e.target.getAllResponseHeaders();
             //死代码, 获取 x-auth
+            //localhost 本地 token 获取
             // let token = header.slice(87, 258);
+            //heroku 服务器 token 获取
             let token = header.slice(189, 360);
 
             // 从这里开始, 这里不可以使用死的数据去获取 token , 要再想想办法. 死数据在 heroku 上面获取到的内容不是 token 的内容, 导致服务器无法根据 token 去识别用户,  会导致 me.page 的运行错误,无法正常的获取数据.
