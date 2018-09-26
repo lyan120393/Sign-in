@@ -227,7 +227,7 @@ app.post("/signIn", authentic, (req, res) => {
   if (signInObj.HH && signInObj.mm) {
     signInTime = toUnix({ HH: signInObj.HH, mm: signInObj.mm });
   }
-  console.log(`${moment.unix(signInTime).format("MM-DD-YYYY HH:mm")}`);
+  console.log(`${moment.unix(signInTime).format("MM-DD-YYYY HH:mm Z")}`);
   //判断当天是否存在签到的数据根据 workday 数组的长度
   let workdayPromise = new Promise((resolve, reject) => {
     let workday = req.user.workdays.filter(workday => {
