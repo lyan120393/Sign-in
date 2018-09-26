@@ -111,9 +111,18 @@ let renderPeriodforStatistic = (periodData, periodObj) => {
     });
     tableDeleteButton.addEventListener("click", function(e) {
       let deleteObj = {};
-      deleteObj.dateMM = moment.unix(element.signIn).format("MM");
-      deleteObj.dateDD = moment.unix(element.signIn).format("DD");
-      deleteObj.dateYYYY = moment.unix(element.signIn).format("YYYY");
+      deleteObj.dateMM = moment
+        .unix(element.signIn)
+        .zone("+00:00")
+        .format("MM");
+      deleteObj.dateDD = moment
+        .unix(element.signIn)
+        .zone("+00:00")
+        .format("DD");
+      deleteObj.dateYYYY = moment
+        .unix(element.signIn)
+        .zone("+00:00")
+        .format("YYYY");
 
       const requestForDelete = new XMLHttpRequest();
       requestForDelete.addEventListener("readystatechange", function(e) {
@@ -154,15 +163,27 @@ let renderPeriodforStatistic = (periodData, periodObj) => {
     });
     //为 tr 的子元素添加内容和属性
     //需要根据回传的数据进行设置内容. 需要允许内容为空是渲染一行空, 但是 week 需要有内容显示周几或者几号.
-    tablethWeek.textContent = moment.unix(element.signIn).format("ddd");
-    tabletdDate.innerHTML = moment.unix(element.signIn).format("MMM D");
+    tablethWeek.textContent = moment
+      .unix(element.signIn)
+      .zone("+00:00")
+      .format("ddd");
+    tabletdDate.innerHTML = moment
+      .unix(element.signIn)
+      .zone("+00:00")
+      .format("MMM D");
     tabletdDate.setAttribute("class", "text-nowrap");
     tablethWeek.setAttribute("scope", "row");
-    tabletdSignIn.innerHTML = moment.unix(element.signIn).format("HH:mm");
+    tabletdSignIn.innerHTML = moment
+      .unix(element.signIn)
+      .zone("+00:00")
+      .format("HH:mm");
     if (!element.signOut) {
       tabletdSignOut.innerHTML = "N/A";
     } else {
-      tabletdSignOut.innerHTML = moment.unix(element.signOut).format("HH:mm");
+      tabletdSignOut.innerHTML = moment
+        .unix(element.signOut)
+        .zone("+00:00")
+        .format("HH:mm");
     }
     if (!element.hours) {
       tabletdHours.innerHTML = "N/A";
