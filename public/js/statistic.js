@@ -113,15 +113,15 @@ let renderPeriodforStatistic = (periodData, periodObj) => {
       let deleteObj = {};
       deleteObj.dateMM = moment
         .unix(element.signIn)
-        .zone("+00:00")
+        .utcOffset("+00:00")
         .format("MM");
       deleteObj.dateDD = moment
         .unix(element.signIn)
-        .zone("+00:00")
+        .utcOffset("+00:00")
         .format("DD");
       deleteObj.dateYYYY = moment
         .unix(element.signIn)
-        .zone("+00:00")
+        .utcOffset("+00:00")
         .format("YYYY");
 
       const requestForDelete = new XMLHttpRequest();
@@ -165,24 +165,24 @@ let renderPeriodforStatistic = (periodData, periodObj) => {
     //需要根据回传的数据进行设置内容. 需要允许内容为空是渲染一行空, 但是 week 需要有内容显示周几或者几号.
     tablethWeek.textContent = moment
       .unix(element.signIn)
-      .zone("+00:00")
+      .utcOffset("+00:00")
       .format("ddd");
     tabletdDate.innerHTML = moment
       .unix(element.signIn)
-      .zone("+00:00")
+      .utcOffset("+00:00")
       .format("MMM D");
     tabletdDate.setAttribute("class", "text-nowrap");
     tablethWeek.setAttribute("scope", "row");
     tabletdSignIn.innerHTML = moment
       .unix(element.signIn)
-      .zone("+00:00")
+      .utcOffset("+00:00")
       .format("HH:mm");
     if (!element.signOut) {
       tabletdSignOut.innerHTML = "N/A";
     } else {
       tabletdSignOut.innerHTML = moment
         .unix(element.signOut)
-        .zone("+00:00")
+        .utcOffset("+00:00")
         .format("HH:mm");
     }
     if (!element.hours) {

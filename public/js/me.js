@@ -17,7 +17,7 @@ let setClockInMessage = function(periodData) {
     //最近七天的记录中, 如果某一天的日期和今天是一样的,代表已经签过到.
     return (
       moment(moment.unix(element.signIn))
-        .zone("+00:00")
+        .utcOffset("+00:00")
         .format("MM-DD-YYYY") === moment().format("MM-DD-YYYY")
     );
   });
@@ -40,7 +40,7 @@ let setClockInMessagePassedByMoment = function(unixtime) {
   //如果今天存在记录, 则进行渲染给 clock In 的 message 区域.
   if (
     moment(moment.unix(unixtime))
-      .zone("+00:00")
+      .utcOffset("+00:00")
       .format("MM-DD-YYYY") === moment().format("MM-DD-YYYY")
   ) {
     document.querySelector(
@@ -138,15 +138,15 @@ let renderPeriod = periodData => {
       let deleteObj = {};
       deleteObj.dateMM = moment
         .unix(element.signIn)
-        .zone("+00:00")
+        .utcOffset("+00:00")
         .format("MM");
       deleteObj.dateDD = moment
         .unix(element.signIn)
-        .zone("+00:00")
+        .utcOffset("+00:00")
         .format("DD");
       deleteObj.dateYYYY = moment
         .unix(element.signIn)
-        .zone("+00:00")
+        .utcOffset("+00:00")
         .format("YYYY");
 
       const requestForDelete = new XMLHttpRequest();
@@ -223,24 +223,24 @@ let renderPeriod = periodData => {
     //需要根据回传的数据进行设置内容. 需要允许内容为空是渲染一行空, 但是 week 需要有内容显示周几或者几号.
     tablethWeek.textContent = moment
       .unix(element.signIn)
-      .zone("+00:00")
+      .utcOffset("+00:00")
       .format("ddd");
     tabletdDate.innerHTML = moment
       .unix(element.signIn)
-      .zone("+00:00")
+      .utcOffset("+00:00")
       .format("MMM D");
     tabletdDate.setAttribute("class", "text-nowrap");
     tablethWeek.setAttribute("scope", "row");
     tabletdSignIn.innerHTML = moment
       .unix(element.signIn)
-      .zone("+00:00")
+      .utcOffset("+00:00")
       .format("HH:mm");
     if (!element.signOut) {
       tabletdSignOut.innerHTML = "N/A";
     } else {
       tabletdSignOut.innerHTML = moment
         .unix(element.signOut)
-        .zone("+00:00")
+        .utcOffset("+00:00")
         .format("HH:mm");
     }
     if (!element.hours) {
@@ -511,7 +511,7 @@ document.querySelector("#signIn-btn").addEventListener("click", function(e) {
         "#signInModal-SignedInInfo-signIn"
       ).textContent = `signIn: ${moment
         .unix(result.signIn)
-        .zone("+00:00")
+        .utcOffset("+00:00")
         .format("HH:mm")}`;
       if (result.signOut) {
         document.querySelector(
@@ -582,7 +582,7 @@ let updateIfBetweenSevenDay = function(unixTime) {
   let theDayBeforeToday7Format = theDayBeforeToday7.format("YYYY-MM-DD");
   let theDay = moment
     .unix(unixTime)
-    .zone("+00:00")
+    .utcOffset("+00:00")
     .format("YYYY-MM-DD");
   console.log(todayFormat, theDayBeforeToday7Format, theDay);
   if (
@@ -716,7 +716,7 @@ document.querySelector("#signOut-btn").addEventListener("click", function(e) {
           "#signOutModal-SignedInInfo-signIn"
         ).textContent = `signIn: ${moment
           .unix(result.signIn)
-          .zone("+00:00")
+          .utcOffset("+00:00")
           .format("HH:mm")}`;
         document.querySelector(
           "#signOutModal-SignedInInfo-signOut"
@@ -1103,7 +1103,7 @@ document
           );
           let theDay = moment
             .unix(theResignDate.signIn)
-            .zone("+00:00")
+            .utcOffset("+00:00")
             .format("YYYY-MM-DD");
           console.log(todayFormat, theDayBeforeToday7Format, theDay);
           if (
@@ -1253,7 +1253,7 @@ document
           );
           let theDay = moment
             .unix(theEditDate.signIn)
-            .zone("+00:00")
+            .utcOffset("+00:00")
             .format("YYYY-MM-DD");
           console.log(todayFormat, theDayBeforeToday7Format, theDay);
           if (
